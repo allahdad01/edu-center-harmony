@@ -8,6 +8,13 @@ import { useAuth } from '@/context/AuthContext';
 import Index from '@/pages/Index';
 import Login from '@/pages/Login';
 import Dashboard from '@/pages/Dashboard';
+import Students from '@/pages/Students';
+import Teachers from '@/pages/Teachers';
+import Books from '@/pages/Books';
+import Finance from '@/pages/Finance';
+import Attendance from '@/pages/Attendance';
+import Exams from '@/pages/Exams';
+import Schedule from '@/pages/Schedule';
 import NotFound from '@/pages/NotFound';
 
 // Layout components
@@ -94,6 +101,83 @@ export default function AppRoutes() {
             <ProtectedRoute>
               <DashboardLayout>
                 <Dashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/students" 
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Students />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/teachers" 
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Teachers />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/books" 
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Books />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/finance" 
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Finance />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/attendance" 
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Attendance />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/exams" 
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Exams />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/schedule" 
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Schedule />
               </DashboardLayout>
             </ProtectedRoute>
           } 
