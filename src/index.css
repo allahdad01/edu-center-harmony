@@ -93,7 +93,11 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/20;
+    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/20 overflow-x-hidden;
+  }
+
+  html {
+    @apply overflow-x-hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {

@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Student } from '@/types';
 import { Calendar } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface StudentAttendanceProps {
   student: Student;
@@ -27,25 +28,29 @@ export function StudentAttendance({ student }: StudentAttendanceProps) {
             </p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Book</TableHead>
-                <TableHead>Period</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Recorded By</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {/* This would be populated with actual attendance data */}
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-6">
-                  No attendance records found.
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+          <div className="w-full overflow-auto">
+            <ScrollArea className="max-h-[600px]">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Book</TableHead>
+                    <TableHead>Period</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Recorded By</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {/* This would be populated with actual attendance data */}
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-6">
+                      No attendance records found.
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </div>
         )}
       </CardContent>
     </Card>
