@@ -31,7 +31,7 @@ const formSchema = z.object({
   contactNumber: z.string().min(7, { message: "Please enter a valid contact number" }),
   address: z.string().min(5, { message: "Address must be at least 5 characters" }),
   specialization: z.string().min(3, { message: "Specialization must be at least 3 characters" }),
-  salaryType: z.enum(["fixed", "perBook", "percentage"] as const),
+  salaryType: z.enum(["fixed", "per-book", "percentage"] as const),
   salaryAmount: z.coerce.number().min(1, { message: "Salary amount must be greater than 0" }),
 });
 
@@ -98,7 +98,7 @@ export default function TeacherForm({ onSuccess, initialData }: TeacherFormProps
     switch (type) {
       case 'fixed':
         return 'Fixed Salary';
-      case 'perBook':
+      case 'per-book':
         return 'Per Book';
       case 'percentage':
         return 'Percentage';
@@ -184,7 +184,7 @@ export default function TeacherForm({ onSuccess, initialData }: TeacherFormProps
                   </FormControl>
                   <SelectContent>
                     <SelectItem value="fixed">{getSalaryTypeLabel('fixed')}</SelectItem>
-                    <SelectItem value="perBook">{getSalaryTypeLabel('perBook')}</SelectItem>
+                    <SelectItem value="per-book">{getSalaryTypeLabel('per-book')}</SelectItem>
                     <SelectItem value="percentage">{getSalaryTypeLabel('percentage')}</SelectItem>
                   </SelectContent>
                 </Select>
@@ -201,7 +201,7 @@ export default function TeacherForm({ onSuccess, initialData }: TeacherFormProps
                 <FormLabel>
                   {form.watch("salaryType") === "percentage" 
                     ? "Percentage Amount (%)" 
-                    : form.watch("salaryType") === "perBook"
+                    : form.watch("salaryType") === "per-book"
                       ? "Amount Per Book (AFN)"
                       : "Monthly Salary (AFN)"}
                 </FormLabel>

@@ -83,7 +83,7 @@ const fetchTeachers = async (): Promise<Teacher[]> => {
       assignedBooks: [
         { id: 'b1', name: 'English Grammar Level 3', department: 'English', startDate: new Date('2023-02-10'), endDate: new Date('2023-05-10'), fee: 1500, periods: 1, isActive: true, teacherIds: ['t1'], students: [] }
       ],
-      attendance: []
+      createdAt: new Date('2022-08-15'),
     },
     {
       id: 't2',
@@ -100,7 +100,7 @@ const fetchTeachers = async (): Promise<Teacher[]> => {
       assignedBooks: [
         { id: 'b2', name: 'Mathematics Foundation', department: 'Mathematics', startDate: new Date('2023-02-15'), endDate: new Date('2023-05-15'), fee: 1800, periods: 2, isActive: true, teacherIds: ['t2', 't3'], students: [] }
       ],
-      attendance: []
+      createdAt: new Date('2022-03-10'),
     },
     {
       id: 't3',
@@ -112,13 +112,13 @@ const fetchTeachers = async (): Promise<Teacher[]> => {
       isActive: true,
       specialization: 'Physics',
       dateOfJoining: new Date('2022-05-20'),
-      salaryType: 'perBook',
+      salaryType: 'per-book',
       salaryAmount: 5000, // 5000 per book
       assignedBooks: [
         { id: 'b2', name: 'Mathematics Foundation', department: 'Mathematics', startDate: new Date('2023-02-15'), endDate: new Date('2023-05-15'), fee: 1800, periods: 2, isActive: true, teacherIds: ['t2', 't3'], students: [] },
         { id: 'b4', name: 'Physics Basics', department: 'Science', startDate: new Date('2023-03-01'), endDate: new Date('2023-06-01'), fee: 2000, periods: 1, isActive: true, teacherIds: ['t3'], students: [] }
       ],
-      attendance: []
+      createdAt: new Date('2022-05-20'),
     },
     {
       id: 't4',
@@ -133,7 +133,7 @@ const fetchTeachers = async (): Promise<Teacher[]> => {
       salaryType: 'fixed',
       salaryAmount: 18000,
       assignedBooks: [],
-      attendance: []
+      createdAt: new Date('2022-01-15'),
     }
   ];
 };
@@ -142,7 +142,7 @@ const getSalaryTypeLabel = (type: SalaryType): string => {
   switch (type) {
     case 'fixed':
       return 'Fixed';
-    case 'perBook':
+    case 'per-book':
       return 'Per Book';
     case 'percentage':
       return 'Percentage';
@@ -338,7 +338,7 @@ export default function Teachers() {
                         <Badge variant="outline" className={
                           teacher.salaryType === 'fixed' 
                             ? 'bg-blue-500/10 text-blue-500' 
-                            : teacher.salaryType === 'perBook'
+                            : teacher.salaryType === 'per-book'
                               ? 'bg-purple-500/10 text-purple-500'
                               : 'bg-green-500/10 text-green-500'
                         }>

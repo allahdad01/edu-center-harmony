@@ -1,5 +1,6 @@
-
 export type UserRole = 'student' | 'teacher' | 'finance' | 'controller' | 'admin' | 'superadmin';
+
+export type SalaryType = 'fixed' | 'per-book' | 'percentage';
 
 export interface User {
   id: string;
@@ -9,13 +10,13 @@ export interface User {
   avatarUrl?: string;
   isActive: boolean;
   createdAt: Date;
+  contactNumber: string;
+  address: string;
 }
 
 export interface Student extends User {
   role: 'student';
   fatherName: string;
-  contactNumber: string;
-  address: string;
   enrolledBooks: Book[];
   waitlistedBooks: Book[];
   attendance: Attendance[];
@@ -27,9 +28,10 @@ export interface Teacher extends User {
   role: 'teacher';
   specialization: string;
   assignedBooks: Book[];
-  salaryType: 'fixed' | 'per-book' | 'percentage';
+  salaryType: SalaryType;
   salaryAmount: number;
   salaryPercentage?: number;
+  dateOfJoining: Date;
 }
 
 export interface Book {

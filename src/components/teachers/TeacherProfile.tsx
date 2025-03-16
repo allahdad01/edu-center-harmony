@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { Teacher } from "@/types";
+import { Teacher, SalaryType } from "@/types";
 import { CalendarDays, GraduationCap, Mail, Phone, UserCog, MapPin, BookOpen, Wallet } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,11 @@ interface TeacherProfileProps {
 }
 
 export default function TeacherProfile({ teacher }: TeacherProfileProps) {
-  const formatSalaryType = (type: string) => {
+  const formatSalaryType = (type: SalaryType) => {
     switch (type) {
       case 'fixed':
         return 'Fixed Salary';
-      case 'perBook':
+      case 'per-book':
         return 'Per Book';
       case 'percentage':
         return 'Percentage of Student Fees';
@@ -25,11 +25,11 @@ export default function TeacherProfile({ teacher }: TeacherProfileProps) {
     }
   };
 
-  const formatSalaryAmount = (amount: number, type: string) => {
+  const formatSalaryAmount = (amount: number, type: SalaryType) => {
     switch (type) {
       case 'fixed':
         return `${amount.toLocaleString()} AFN/month`;
-      case 'perBook':
+      case 'per-book':
         return `${amount.toLocaleString()} AFN/book`;
       case 'percentage':
         return `${amount}%`;
@@ -106,7 +106,7 @@ export default function TeacherProfile({ teacher }: TeacherProfileProps) {
 
               <Separator />
 
-              {teacher.salaryType === 'perBook' && (
+              {teacher.salaryType === 'per-book' && (
                 <div className="space-y-1">
                   <div className="text-sm text-muted-foreground">Estimated Monthly Salary</div>
                   <div className="font-medium text-lg">
