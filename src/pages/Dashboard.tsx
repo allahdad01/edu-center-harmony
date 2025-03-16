@@ -8,6 +8,7 @@ import { UserRole } from '@/types';
 import { dashboardConfig } from '@/components/dashboard/DashboardConfig';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { renderRoleSpecificContent } from '@/components/dashboard/DashboardSections';
+import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -25,7 +26,9 @@ export default function Dashboard() {
             <p className="text-muted-foreground">{config.welcomeMessage}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button>View Reports</Button>
+            <Button asChild>
+              <Link to="/reports">View Reports</Link>
+            </Button>
           </div>
         </div>
 

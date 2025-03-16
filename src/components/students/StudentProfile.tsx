@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,12 +33,49 @@ import {
 } from '@/components/ui/table';
 import { Student } from '@/types';
 import { format } from 'date-fns';
+import { toast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface StudentProfileProps {
   student: Student;
 }
 
 export function StudentProfile({ student }: StudentProfileProps) {
+  const [activeTab, setActiveTab] = useState('books');
+  const navigate = useNavigate();
+
+  const handleEditProfile = () => {
+    toast({
+      title: "Edit Profile",
+      description: "Opening student profile editor...",
+    });
+    // In a real app, this would navigate to an edit page or open a modal
+  };
+
+  const handleGenerateIdCard = () => {
+    toast({
+      title: "Generating ID Card",
+      description: "Student ID card is being generated. It will be ready to download shortly.",
+    });
+    // In a real app, this would trigger an API call to generate a PDF
+  };
+
+  const handleViewResultSheet = () => {
+    toast({
+      title: "Result Sheet",
+      description: "Loading student result sheet...",
+    });
+    // In a real app, this would navigate to the results page
+  };
+
+  const handleViewInvoices = () => {
+    toast({
+      title: "Invoices",
+      description: "Loading student invoices...",
+    });
+    // In a real app, this would navigate to the invoices page
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row">
@@ -98,26 +136,26 @@ export function StudentProfile({ student }: StudentProfileProps) {
         </div>
         
         <div className="flex flex-col gap-2 md:w-1/3">
-          <Button className="w-full justify-start gap-2">
+          <Button className="w-full justify-start gap-2" onClick={handleEditProfile}>
             <UserCog className="h-4 w-4" />
             Edit Profile
           </Button>
-          <Button variant="outline" className="w-full justify-start gap-2">
+          <Button variant="outline" className="w-full justify-start gap-2" onClick={handleGenerateIdCard}>
             <FileText className="h-4 w-4" />
             Generate ID Card
           </Button>
-          <Button variant="outline" className="w-full justify-start gap-2">
+          <Button variant="outline" className="w-full justify-start gap-2" onClick={handleViewResultSheet}>
             <GraduationCap className="h-4 w-4" />
             View Result Sheet
           </Button>
-          <Button variant="outline" className="w-full justify-start gap-2">
+          <Button variant="outline" className="w-full justify-start gap-2" onClick={handleViewInvoices}>
             <FileText className="h-4 w-4" />
             View Invoices
           </Button>
         </div>
       </div>
 
-      <Tabs defaultValue="books">
+      <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full">
           <TabsTrigger value="books" className="flex-1">
             <BookOpenCheck className="mr-2 h-4 w-4" />
@@ -140,7 +178,10 @@ export function StudentProfile({ student }: StudentProfileProps) {
         <TabsContent value="books" className="space-y-4 pt-4">
           <div className="flex justify-between">
             <h3 className="text-lg font-medium">Enrolled Books</h3>
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="outline" onClick={() => toast({
+              title: "Change Books",
+              description: "Opening book selection interface...",
+            })}>
               Change Books
             </Button>
           </div>
@@ -154,7 +195,10 @@ export function StudentProfile({ student }: StudentProfileProps) {
                   <p className="text-sm text-muted-foreground">
                     This student is not currently enrolled in any books.
                   </p>
-                  <Button size="sm" className="mt-2">
+                  <Button size="sm" className="mt-2" onClick={() => toast({
+                    title: "Enroll in Book",
+                    description: "Opening book enrollment interface...",
+                  })}>
                     Enroll in a Book
                   </Button>
                 </div>
@@ -198,8 +242,14 @@ export function StudentProfile({ student }: StudentProfileProps) {
                     </div>
                   </CardContent>
                   <CardFooter className="flex justify-between">
-                    <Button variant="outline" size="sm">View Details</Button>
-                    <Button variant="outline" size="sm">Change Book</Button>
+                    <Button variant="outline" size="sm" onClick={() => toast({
+                      title: "Book Details",
+                      description: `Viewing details for ${book.name}`,
+                    })}>View Details</Button>
+                    <Button variant="outline" size="sm" onClick={() => toast({
+                      title: "Change Book",
+                      description: `Changing book ${book.name}`,
+                    })}>Change Book</Button>
                   </CardFooter>
                 </Card>
               ))}
@@ -236,8 +286,14 @@ export function StudentProfile({ student }: StudentProfileProps) {
                       </div>
                     </CardContent>
                     <CardFooter className="flex justify-between">
-                      <Button variant="outline" size="sm">View Details</Button>
-                      <Button variant="outline" size="sm">Remove from Waitlist</Button>
+                      <Button variant="outline" size="sm" onClick={() => toast({
+                        title: "Book Details",
+                        description: `Viewing waitlisted book details for ${book.name}`,
+                      })}>View Details</Button>
+                      <Button variant="outline" size="sm" onClick={() => toast({
+                        title: "Remove from Waitlist",
+                        description: `Removing ${book.name} from waitlist`,
+                      })}>Remove from Waitlist</Button>
                     </CardFooter>
                   </Card>
                 ))}
@@ -339,7 +395,10 @@ export function StudentProfile({ student }: StudentProfileProps) {
                   View all invoice and payment history
                 </CardDescription>
               </div>
-              <Button size="sm">Generate Invoice</Button>
+              <Button size="sm" onClick={() => toast({
+                title: "Generate Invoice",
+                description: "Opening invoice generator...",
+              })}>Generate Invoice</Button>
             </CardHeader>
             <CardContent>
               {student.invoices && student.invoices.length === 0 ? (

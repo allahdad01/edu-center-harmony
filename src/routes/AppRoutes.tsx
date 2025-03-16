@@ -20,6 +20,7 @@ import NotFound from '@/pages/NotFound';
 // Layout components
 import Navbar from '@/components/layout/Navbar';
 import Sidebar from '@/components/layout/Sidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Protected route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -54,17 +55,26 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 // Layout wrapper
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isMobile = useIsMobile();
+  const location = useLocation();
   
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
+  
+  // Close sidebar on route change on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname, isMobile]);
   
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar toggleSidebar={toggleSidebar} />
       <div className="flex flex-1">
         <Sidebar isOpen={sidebarOpen} />
-        <main className="flex-1 md:pl-64">{children}</main>
+        <main className="flex-1 md:pl-64 overflow-auto">{children}</main>
       </div>
     </div>
   );
@@ -72,21 +82,6 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
 export default function AppRoutes() {
   const location = useLocation();
-
-  // Close sidebar on location change on mobile
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        const sidebar = document.querySelector('[data-sidebar]');
-        if (sidebar) {
-          sidebar.classList.add('-translate-x-full');
-        }
-      }
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [location]);
 
   return (
     <AnimatePresence mode="wait">
@@ -181,6 +176,28 @@ export default function AppRoutes() {
               </DashboardLayout>
             </ProtectedRoute>
           } 
+        />
+
+        <Route
+          path="/invoices"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Finance />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Exams />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
         />
         
         {/* Catch-all route */}
