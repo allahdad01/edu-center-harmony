@@ -8,10 +8,16 @@ import { toast } from '@/hooks/use-toast';
 
 interface StudentHeaderProps {
   student: Student;
+  onEdit?: () => void;
 }
 
-export function StudentHeader({ student }: StudentHeaderProps) {
+export function StudentHeader({ student, onEdit }: StudentHeaderProps) {
   const handleEditProfile = () => {
+    if (onEdit) {
+      onEdit();
+      return;
+    }
+    
     toast({
       title: "Edit Profile",
       description: "Opening student profile editor...",
