@@ -11,6 +11,8 @@ const MOCK_USERS: User[] = [
     role: 'admin',
     isActive: true,
     createdAt: new Date(),
+    contactNumber: '+1 (555) 123-4567',
+    address: '123 Admin Street, Admin City, AC 12345'
   },
   {
     id: '2',
@@ -19,6 +21,8 @@ const MOCK_USERS: User[] = [
     role: 'teacher',
     isActive: true,
     createdAt: new Date(),
+    contactNumber: '+1 (555) 234-5678',
+    address: '456 Teacher Avenue, Teacher Town, TT 23456'
   },
   {
     id: '3',
@@ -27,6 +31,8 @@ const MOCK_USERS: User[] = [
     role: 'student',
     isActive: true,
     createdAt: new Date(),
+    contactNumber: '+1 (555) 345-6789',
+    address: '789 Student Road, Student Village, SV 34567'
   },
 ];
 
