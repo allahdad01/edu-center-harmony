@@ -1,9 +1,10 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { User, UserRole } from '@/types';
+import { User } from '@/types';
 import { toast } from '@/hooks/use-toast';
+import { AuthService } from '@/services/AuthService';
 
 interface AuthContextType {
   user: User | null;
@@ -22,92 +23,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Function to map Supabase user to our app's User type
-  const mapSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User> => {
-    try {
-      // Get user roles
-      const { data: roleData, error: roleError } = await supabase
-        .rpc('get_user_roles', { user_id: supabaseUser.id });
-      
-      if (roleError) throw roleError;
-      
-      // Fetch teacher or student data depending on role
-      const roles = roleData as UserRole[];
-      const isTeacher = roles.includes('teacher');
-      const isStudent = roles.includes('student');
-      
-      let userData = null;
-      
-      if (isTeacher) {
-        const { data, error } = await supabase
-          .from('teachers')
-          .select('*')
-          .eq('user_id', supabaseUser.id)
-          .maybeSingle();
-          
-        if (error) throw error;
-        userData = data;
-      } else if (isStudent) {
-        const { data, error } = await supabase
-          .from('students')
-          .select('*')
-          .eq('user_id', supabaseUser.id)
-          .maybeSingle();
-          
-        if (error) throw error;
-        userData = data;
-      }
-      
-      // If we don't have user data, create a minimal user object
-      if (!userData) {
-        return {
-          id: supabaseUser.id,
-          name: supabaseUser.user_metadata?.name || 'Unknown User',
-          email: supabaseUser.email || '',
-          role: roles[0] || 'student',
-          isActive: true,
-          createdAt: new Date(),
-          contactNumber: '',
-          address: '',
-        };
-      }
-      
-      return {
-        id: userData?.id || supabaseUser.id,
-        name: userData?.name || supabaseUser.user_metadata?.name || 'Unknown User',
-        email: userData?.email || supabaseUser.email || '',
-        role: roles[0] || 'student',
-        isActive: userData?.is_active !== false,
-        createdAt: userData?.created_at ? new Date(userData.created_at) : new Date(),
-        contactNumber: userData?.contact_number || '',
-        address: userData?.address || '',
-      };
-    } catch (error) {
-      console.error('Error mapping user:', error);
-      // Return a minimal user object on error
-      return {
-        id: supabaseUser.id,
-        name: supabaseUser.user_metadata?.name || 'Unknown User',
-        email: supabaseUser.email || '',
-        role: 'student',
-        isActive: true,
-        createdAt: new Date(),
-        contactNumber: '',
-        address: '',
-      };
-    }
-  };
-
-  // Check for existing session on mount
+  // Check for existing session on mount and setup auth state listener
   useEffect(() => {
     const checkAuth = async () => {
       try {
         setIsLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await AuthService.checkSession();
         
         if (session?.user) {
           try {
-            const mappedUser = await mapSupabaseUser(session.user);
+            const mappedUser = await AuthService.mapSupabaseUser(session.user);
             setUser(mappedUser);
           } catch (err) {
             console.error('Error mapping user:', err);
@@ -131,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (event === 'SIGNED_IN' && session?.user) {
           try {
-            const mappedUser = await mapSupabaseUser(session.user);
+            const mappedUser = await AuthService.mapSupabaseUser(session.user);
             setUser(mappedUser);
           } catch (error) {
             console.error('Error setting user:', error);
@@ -155,15 +80,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      const { data, error } = await AuthService.signIn(email, password);
       
       if (error) throw error;
       
       if (data?.user) {
-        const mappedUser = await mapSupabaseUser(data.user);
+        const mappedUser = await AuthService.mapSupabaseUser(data.user);
         setUser(mappedUser);
       }
     } catch (err: any) {
@@ -179,15 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: name
-          }
-        }
-      });
+      const { error } = await AuthService.signUp(email, password, name);
       
       if (error) throw error;
       
@@ -206,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
+      await AuthService.signOut();
       setUser(null);
     } catch (error) {
       console.error('Error during logout:', error);
