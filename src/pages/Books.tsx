@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import PageTransition from '@/components/layout/PageTransition';
@@ -12,7 +11,7 @@ import { BookPagination } from '@/components/books/BookPagination';
 import { AddBookDialog } from '@/components/books/AddBookDialog';
 import { ExportBooksMenu } from '@/components/books/ExportBooksMenu';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BookService } from '@/services/BookService';
+import { BookService } from '@/services/book';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Books() {

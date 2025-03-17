@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -31,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { BookService } from "@/services/BookService";
+import { BookService } from "@/services/book";
 import { Book } from "@/types";
 
 const formSchema = z.object({
