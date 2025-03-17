@@ -1,5 +1,5 @@
 
-import { Book, Student, Teacher } from '@/types';
+import { Book, Student, Teacher, SalaryType } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 
 export class BookService {
