@@ -18,6 +18,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Student } from '@/types';
+import { StudentService } from '@/services/StudentService';
+import { Loader2 } from 'lucide-react';
 
 interface StudentFormProps {
   student?: Student;
@@ -27,7 +29,7 @@ interface StudentFormProps {
 const studentSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   fatherName: z.string().min(2, { message: "Father's name must be at least 2 characters." }),
-  email: z.string().email({ message: "Please enter a valid email address." }),
+  email: z.string().email({ message: "Please enter a valid email address." }).optional().or(z.literal('')),
   contactNumber: z.string().min(7, { message: "Please enter a valid contact number." }),
   address: z.string().min(5, { message: "Address must be at least 5 characters." }),
   isActive: z.boolean().default(true),
@@ -57,25 +59,30 @@ export function StudentForm({ student, onSuccess }: StudentFormProps) {
     setIsSubmitting(true);
     
     try {
-      // This would be an API call in a real application
-      console.log('Student form data:', data);
-      
-      // Simulate network request
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: student ? "Student Updated" : "Student Added",
-        description: student
-          ? `${data.name}'s information has been updated.`
-          : `${data.name} has been added to the student list.`,
-      });
+      if (student?.id) {
+        // Update existing student
+        await StudentService.updateStudent(student.id, data);
+        
+        toast({
+          title: "Student Updated",
+          description: `${data.name}'s information has been updated.`,
+        });
+      } else {
+        // Create new student
+        await StudentService.createStudent(data);
+        
+        toast({
+          title: "Student Added",
+          description: `${data.name} has been added to the student list.`,
+        });
+      }
       
       onSuccess();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting student form:', error);
       toast({
         title: "Error",
-        description: "There was a problem saving the student information.",
+        description: error.message || "There was a problem saving the student information.",
         variant: "destructive",
       });
     } finally {
@@ -205,7 +212,14 @@ export function StudentForm({ student, onSuccess }: StudentFormProps) {
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : student ? 'Update Student' : 'Add Student'}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {student ? 'Updating...' : 'Adding...'}
+              </>
+            ) : (
+              student ? 'Update Student' : 'Add Student'
+            )}
           </Button>
         </div>
       </form>

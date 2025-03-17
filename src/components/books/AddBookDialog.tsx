@@ -13,9 +13,17 @@ import BookForm from '@/components/books/BookForm';
 interface AddBookDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
+  onSuccess?: () => void;
 }
 
-export function AddBookDialog({ isOpen, setIsOpen }: AddBookDialogProps) {
+export function AddBookDialog({ isOpen, setIsOpen, onSuccess }: AddBookDialogProps) {
+  const handleSuccess = () => {
+    setIsOpen(false);
+    if (onSuccess) {
+      onSuccess();
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -28,9 +36,7 @@ export function AddBookDialog({ isOpen, setIsOpen }: AddBookDialogProps) {
         <DialogHeader>
           <DialogTitle>Add New Book</DialogTitle>
         </DialogHeader>
-        <BookForm 
-          onSuccess={() => setIsOpen(false)}
-        />
+        <BookForm onSuccess={handleSuccess} />
       </DialogContent>
     </Dialog>
   );

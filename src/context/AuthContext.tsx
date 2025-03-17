@@ -1,47 +1,16 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { User, UserRole } from '@/types';
-
-// Mock user data - in a real app, this would be fetched from an API
-const MOCK_USERS: User[] = [
-  {
-    id: '1',
-    name: 'Admin User',
-    email: 'admin@example.com',
-    role: 'admin',
-    isActive: true,
-    createdAt: new Date(),
-    contactNumber: '+1 (555) 123-4567',
-    address: '123 Admin Street, Admin City, AC 12345'
-  },
-  {
-    id: '2',
-    name: 'Teacher User',
-    email: 'teacher@example.com',
-    role: 'teacher',
-    isActive: true,
-    createdAt: new Date(),
-    contactNumber: '+1 (555) 234-5678',
-    address: '456 Teacher Avenue, Teacher Town, TT 23456'
-  },
-  {
-    id: '3',
-    name: 'Student User',
-    email: 'student@example.com',
-    role: 'student',
-    isActive: true,
-    createdAt: new Date(),
-    contactNumber: '+1 (555) 345-6789',
-    address: '789 Student Road, Student Village, SV 34567'
-  },
-];
+import { toast } from '@/hooks/use-toast';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -52,24 +21,104 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Function to map Supabase user to our app's User type
+  const mapSupabaseUser = async (supabaseUser: SupabaseUser): Promise<User> => {
+    try {
+      // Get user roles
+      const { data: roleData, error: roleError } = await supabase
+        .rpc('get_user_roles', { user_id: supabaseUser.id });
+      
+      if (roleError) throw roleError;
+      
+      // Fetch teacher or student data depending on role
+      const roles = roleData as UserRole[];
+      const isTeacher = roles.includes('teacher');
+      const isStudent = roles.includes('student');
+      
+      let userData = null;
+      
+      if (isTeacher) {
+        const { data, error } = await supabase
+          .from('teachers')
+          .select('*')
+          .eq('user_id', supabaseUser.id)
+          .single();
+          
+        if (error) throw error;
+        userData = data;
+      } else if (isStudent) {
+        const { data, error } = await supabase
+          .from('students')
+          .select('*')
+          .eq('user_id', supabaseUser.id)
+          .single();
+          
+        if (error) throw error;
+        userData = data;
+      }
+      
+      return {
+        id: userData?.id || supabaseUser.id,
+        name: userData?.name || 'Unknown User',
+        email: userData?.email || supabaseUser.email || '',
+        role: roles[0] || 'student',
+        isActive: userData?.is_active !== false,
+        createdAt: userData?.created_at ? new Date(userData.created_at) : new Date(),
+        contactNumber: userData?.contact_number || '',
+        address: userData?.address || '',
+        fatherName: userData?.father_name || ''
+      };
+    } catch (error) {
+      console.error('Error mapping user:', error);
+      throw error;
+    }
+  };
+
   // Check for existing session on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // In a real app, you would verify the token with your backend
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
+        setIsLoading(true);
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          const mappedUser = await mapSupabaseUser(session.user);
+          setUser(mappedUser);
         }
       } catch (err) {
         console.error('Auth error:', err);
-        setError('Session expired. Please login again.');
+        setError('Session error. Please login again.');
       } finally {
         setIsLoading(false);
       }
     };
 
     checkAuth();
+
+    // Setup listener for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setIsLoading(true);
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          try {
+            const mappedUser = await mapSupabaseUser(session.user);
+            setUser(mappedUser);
+          } catch (error) {
+            console.error('Error setting user:', error);
+            setError('Could not retrieve user data.');
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+        }
+        
+        setIsLoading(false);
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -77,29 +126,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      // Simulate API request delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      // In a real app, this would be an API call to your backend
-      const foundUser = MOCK_USERS.find(u => u.email === email);
+      if (error) throw error;
       
-      if (foundUser && password === 'password') { // In a real app, never check passwords this way
-        setUser(foundUser);
-        localStorage.setItem('user', JSON.stringify(foundUser));
-      } else {
-        throw new Error('Invalid email or password');
+      if (data?.user) {
+        const mappedUser = await mapSupabaseUser(data.user);
+        setUser(mappedUser);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+    } catch (err: any) {
+      setError(err.message || 'Failed to login');
       throw err;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+    } catch (error) {
+      console.error('Error during logout:', error);
+      toast({
+        title: 'Logout failed',
+        description: 'There was a problem logging out',
+        variant: 'destructive'
+      });
+    }
   };
 
   const value = {

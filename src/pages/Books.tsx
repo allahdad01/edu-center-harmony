@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import PageTransition from '@/components/layout/PageTransition';
@@ -11,80 +12,8 @@ import { BookPagination } from '@/components/books/BookPagination';
 import { AddBookDialog } from '@/components/books/AddBookDialog';
 import { ExportBooksMenu } from '@/components/books/ExportBooksMenu';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-// Mock data fetching function
-const fetchBooks = async (): Promise<Book[]> => {
-  return [
-    { 
-      id: 'b1', 
-      name: 'English Grammar Level 3', 
-      department: 'English', 
-      startDate: new Date('2023-02-10'), 
-      endDate: new Date('2023-05-10'), 
-      fee: 1500, 
-      periods: 1, 
-      isActive: true, 
-      teacherIds: ['t1'],
-      students: [
-        { id: 's1', name: 'Ahmad Rahimi', email: 'ahmad.rahimi@example.com', role: 'student', fatherName: 'Mohammad Rahimi', contactNumber: '+93 700 123 456', address: 'Kabul, Afghanistan', isActive: true, createdAt: new Date('2023-01-15'), enrolledBooks: [], waitlistedBooks: [], attendance: [], marks: [], invoices: [] },
-        { id: 's5', name: 'Najiba Karimi', email: 'najiba.karimi@example.com', role: 'student', fatherName: 'Abdul Karim', contactNumber: '+93 700 555 666', address: 'Kabul, Afghanistan', isActive: true, createdAt: new Date('2023-01-18'), enrolledBooks: [], waitlistedBooks: [], attendance: [], marks: [], invoices: [] },
-      ]
-    },
-    { 
-      id: 'b2', 
-      name: 'Mathematics Foundation', 
-      department: 'Mathematics', 
-      startDate: new Date('2023-02-15'), 
-      endDate: new Date('2023-05-15'), 
-      fee: 1800, 
-      periods: 2, 
-      isActive: true, 
-      teacherIds: ['t2', 't3'],
-      students: [
-        { id: 's2', name: 'Fatima Ahmadi', email: 'fatima.ahmadi@example.com', role: 'student', fatherName: 'Ali Ahmadi', contactNumber: '+93 700 987 654', address: 'Herat, Afghanistan', isActive: true, createdAt: new Date('2023-01-20'), enrolledBooks: [], waitlistedBooks: [], attendance: [], marks: [], invoices: [] },
-        { id: 's4', name: 'Maryam Hashimi', email: 'maryam.hashimi@example.com', role: 'student', fatherName: 'Mahmood Hashimi', contactNumber: '+93 700 444 555', address: 'Jalalabad, Afghanistan', isActive: true, createdAt: new Date('2023-01-19'), enrolledBooks: [], waitlistedBooks: [], attendance: [], marks: [], invoices: [] }
-      ]
-    },
-    { 
-      id: 'b3', 
-      name: 'Advanced English Writing', 
-      department: 'English', 
-      startDate: new Date('2023-06-01'), 
-      endDate: undefined, 
-      fee: 2000, 
-      periods: 1, 
-      isActive: false, 
-      teacherIds: ['t1'],
-      students: []
-    },
-    { 
-      id: 'b4', 
-      name: 'Physics Basics', 
-      department: 'Science', 
-      startDate: new Date('2023-03-01'), 
-      endDate: new Date('2023-06-01'), 
-      fee: 2000, 
-      periods: 1, 
-      isActive: true, 
-      teacherIds: ['t3'],
-      students: [
-        { id: 's6', name: 'Sayed Ali', email: 'sayed.ali@example.com', role: 'student', fatherName: 'Sayed Mohammad', contactNumber: '+93 700 666 777', address: 'Kabul, Afghanistan', isActive: true, createdAt: new Date('2023-01-21'), enrolledBooks: [], waitlistedBooks: [], attendance: [], marks: [], invoices: [] }
-      ]
-    },
-    { 
-      id: 'b5', 
-      name: 'Chemistry Basics', 
-      department: 'Science', 
-      startDate: new Date('2023-04-01'), 
-      endDate: new Date('2023-07-01'), 
-      fee: 2200, 
-      periods: 1, 
-      isActive: true, 
-      teacherIds: [],
-      students: []
-    }
-  ];
-};
+import { BookService } from '@/services/BookService';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Books() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -94,17 +23,25 @@ export default function Books() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
+  const { toast } = useToast();
 
-  const { data: books = [], isLoading } = useQuery({
+  const { data: books = [], isLoading, refetch } = useQuery({
     queryKey: ['books'],
-    queryFn: fetchBooks,
+    queryFn: BookService.getAllBooks,
+    onError: (error: any) => {
+      toast({
+        variant: "destructive",
+        title: "Error loading books",
+        description: error.message || "Could not load books. Please try again.",
+      });
+    }
   });
 
   // Filter books based on search term and active tab
   const filteredBooks = books.filter((book) => {
     const matchesSearch = 
       book.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      book.department.toLowerCase().includes(searchTerm.toLowerCase());
+      String(book.department).toLowerCase().includes(searchTerm.toLowerCase());
     
     if (activeTab === 'all') return matchesSearch;
     if (activeTab === 'active') return matchesSearch && book.isActive;
@@ -128,9 +65,19 @@ export default function Books() {
     currentPage * booksPerPage
   );
 
-  const handleViewDetails = (book: Book) => {
-    setSelectedBook(book);
-    setIsDetailsOpen(true);
+  const handleViewDetails = async (book: Book) => {
+    try {
+      // Get full book details
+      const fullBookDetails = await BookService.getBookById(book.id);
+      setSelectedBook(fullBookDetails);
+      setIsDetailsOpen(true);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error loading book details",
+        description: error.message || "Could not load book details. Please try again.",
+      });
+    }
   };
 
   return (
@@ -148,6 +95,7 @@ export default function Books() {
               <AddBookDialog 
                 isOpen={isAddDialogOpen} 
                 setIsOpen={setIsAddDialogOpen}
+                onSuccess={() => refetch()}
               />
               <ExportBooksMenu />
             </div>

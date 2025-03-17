@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,6 +31,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { BookService } from "@/services/BookService";
+import { Book } from "@/types";
 
 const formSchema = z.object({
   name: z.string().min(3, { message: "Book name must be at least 3 characters" }),
@@ -49,18 +51,37 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface BookFormProps {
   onSuccess?: () => void;
-  initialData?: Partial<FormValues>;
+  initialData?: Partial<Book>;
 }
 
 export default function BookForm({ onSuccess, initialData }: BookFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [departments, setDepartments] = useState<{id: string; name: string}[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const loadDepartments = async () => {
+      try {
+        const deptData = await BookService.getAllDepartments();
+        setDepartments(deptData);
+      } catch (error) {
+        console.error("Error loading departments:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Could not load departments. Please try again.",
+        });
+      }
+    };
+
+    loadDepartments();
+  }, [toast]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialData?.name || "",
-      department: initialData?.department || "",
+      department: initialData?.department?.toString() || "",
       startDate: initialData?.startDate || new Date(),
       endDate: initialData?.endDate,
       fee: initialData?.fee || 0,
@@ -72,16 +93,26 @@ export default function BookForm({ onSuccess, initialData }: BookFormProps) {
     setIsSubmitting(true);
     
     try {
-      // This would be an API call in a real application
-      console.log("Submitting book data:", data);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Book added successfully",
-        description: `${data.name} has been added to the system.`,
-      });
+      if (initialData?.id) {
+        // Update existing book
+        await BookService.updateBook(initialData.id, {
+          ...data,
+          teacherIds: initialData.teacherIds, // Preserve existing teacher assignments
+        });
+        
+        toast({
+          title: "Book updated successfully",
+          description: `${data.name} has been updated.`,
+        });
+      } else {
+        // Create new book
+        await BookService.createBook(data);
+        
+        toast({
+          title: "Book added successfully",
+          description: `${data.name} has been added to the system.`,
+        });
+      }
       
       if (onSuccess) {
         onSuccess();
@@ -91,12 +122,12 @@ export default function BookForm({ onSuccess, initialData }: BookFormProps) {
       if (!initialData) {
         form.reset();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting form:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "There was a problem adding the book. Please try again.",
+        description: error.message || "There was a problem saving the book. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
@@ -137,11 +168,9 @@ export default function BookForm({ onSuccess, initialData }: BookFormProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="English">English</SelectItem>
-                    <SelectItem value="Mathematics">Mathematics</SelectItem>
-                    <SelectItem value="Science">Science</SelectItem>
-                    <SelectItem value="Computer">Computer Science</SelectItem>
-                    <SelectItem value="Language">Language</SelectItem>
+                    {departments.map(dept => (
+                      <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -179,9 +208,6 @@ export default function BookForm({ onSuccess, initialData }: BookFormProps) {
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) =>
-                        date < new Date(new Date().setHours(0, 0, 0, 0))
-                      }
                       initialFocus
                     />
                   </PopoverContent>
@@ -287,7 +313,7 @@ export default function BookForm({ onSuccess, initialData }: BookFormProps) {
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {initialData ? "Update Book" : "Add Book"}
+            {initialData?.id ? "Update Book" : "Add Book"}
           </Button>
         </div>
       </form>

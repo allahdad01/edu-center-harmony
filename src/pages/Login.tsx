@@ -1,39 +1,66 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
-import GlassPanel from '@/components/ui-custom/GlassPanel';
-import { School } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useState } from "react";
+import { useNavigate, Navigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
+
+const formSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, error } = useAuth();
-  const navigate = useNavigate();
+  const { login, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  // If already authenticated, redirect to dashboard
+  if (isAuthenticated && !isLoading) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
-
+    
     try {
-      await login(email, password);
+      await login(data.email, data.password);
       toast({
-        title: 'Login successful',
-        description: 'Welcome back to EduCenter Management System.',
+        title: "Login successful",
+        description: "Welcome back!",
       });
-      navigate('/dashboard');
-    } catch (err) {
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error("Login error:", error);
       toast({
-        variant: 'destructive',
-        title: 'Login failed',
-        description: error || 'Please check your credentials and try again',
+        variant: "destructive",
+        title: "Login failed",
+        description: error.message || "Invalid email or password",
       });
     } finally {
       setIsSubmitting(false);
@@ -41,72 +68,82 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted p-4 md:p-0">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(40%_35%_at_60%_30%,#3b82f680_0%,transparent_50%)] opacity-20" />
-      
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="w-full max-w-md"
-      >
-        <GlassPanel className="px-8 py-12">
-          <div className="flex flex-col items-center space-y-2 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-              <School className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <h1 className="text-2xl font-bold">Welcome back</h1>
-            <p className="text-sm text-muted-foreground">
-              Login to access the EduCenter Management System
-            </p>
-          </div>
-          
-          <form onSubmit={handleLogin} className="mt-8 space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="h-11"
+    <div className="flex h-screen w-full items-center justify-center bg-gray-50 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold">Sign in</CardTitle>
+          <CardDescription>
+            Enter your credentials to access your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="you@example.com" 
+                        {...field} 
+                        autoComplete="email"
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Button variant="link" className="h-auto p-0 text-xs font-normal">
-                  Forgot password?
-                </Button>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="h-11"
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password" 
+                        placeholder="••••••••" 
+                        {...field} 
+                        autoComplete="current-password"
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            
-            <Button type="submit" className="w-full h-11" disabled={isSubmitting}>
-              {isSubmitting ? 'Signing in...' : 'Sign in'}
-            </Button>
-          </form>
-          
-          <div className="mt-6 text-center text-sm">
-            <span className="text-muted-foreground">Test accounts: </span>
-            <span className="font-medium">
-              admin@example.com, teacher@example.com, student@example.com
-            </span>
-            <p className="mt-1 text-xs text-muted-foreground">Password: password</p>
-          </div>
-        </GlassPanel>
-      </motion.div>
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Logging in...
+                  </>
+                ) : (
+                  "Sign in"
+                )}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+        <CardFooter className="flex flex-col">
+          <Button variant="link" className="px-0 font-normal" onClick={() => {
+            toast({
+              title: "Password Recovery",
+              description: "This feature will be implemented soon.",
+            });
+          }}>
+            Forgot your password?
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }
