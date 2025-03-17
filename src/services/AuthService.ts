@@ -115,4 +115,85 @@ export class AuthService {
       };
     }
   }
+  
+  // Add methods for user profile operations
+  static async updateUserProfile(userId: string, profileData: Partial<User>): Promise<void> {
+    try {
+      const { data: roles } = await supabase
+        .rpc('get_user_roles', { user_id: userId });
+        
+      if (!roles || roles.length === 0) {
+        throw new Error('User has no role assigned');
+      }
+      
+      const isTeacher = roles.includes('teacher');
+      const isStudent = roles.includes('student');
+      
+      if (isTeacher) {
+        await supabase
+          .from('teachers')
+          .update({
+            name: profileData.name,
+            email: profileData.email,
+            contact_number: profileData.contactNumber,
+            address: profileData.address,
+            is_active: profileData.isActive
+          })
+          .eq('user_id', userId);
+      } else if (isStudent) {
+        await supabase
+          .from('students')
+          .update({
+            name: profileData.name,
+            email: profileData.email,
+            contact_number: profileData.contactNumber,
+            address: profileData.address,
+            is_active: profileData.isActive
+          })
+          .eq('user_id', userId);
+      }
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      throw error;
+    }
+  }
+  
+  static async assignRole(userId: string, role: UserRole): Promise<void> {
+    try {
+      // Check if user already has this role
+      const { data: existingRoles } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('role', role);
+        
+      if (existingRoles && existingRoles.length > 0) {
+        return; // Role already assigned
+      }
+      
+      // Add the new role
+      await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role
+        });
+    } catch (error) {
+      console.error('Error assigning role:', error);
+      throw error;
+    }
+  }
+  
+  static async removeRole(userId: string, role: UserRole): Promise<void> {
+    try {
+      await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId)
+        .eq('role', role);
+    } catch (error) {
+      console.error('Error removing role:', error);
+      throw error;
+    }
+  }
 }

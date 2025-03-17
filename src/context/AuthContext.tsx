@@ -14,6 +14,7 @@ interface AuthContextType {
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
+  updateProfile: (profileData: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -131,6 +132,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     }
   };
+  
+  const updateProfile = async (profileData: Partial<User>) => {
+    if (!user) throw new Error('No user logged in');
+    
+    try {
+      setIsLoading(true);
+      await AuthService.updateUserProfile(user.id, profileData);
+      
+      // Update local user state
+      setUser(prev => prev ? { ...prev, ...profileData } : null);
+      
+      toast({
+        title: 'Profile updated',
+        description: 'Your profile has been successfully updated'
+      });
+    } catch (err: any) {
+      toast({
+        title: 'Update failed',
+        description: err.message || 'Failed to update profile',
+        variant: 'destructive'
+      });
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const value = {
     user,
@@ -140,6 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     register,
     logout,
     isAuthenticated: !!user,
+    updateProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
