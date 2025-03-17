@@ -1,6 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { Student, Book } from '@/types';
+import { Student, Book, Attendance, ExamMark, Invoice } from '@/types';
 
 export const StudentService = {
   // Fetch all students
@@ -99,7 +98,7 @@ export const StudentService = {
     });
     
     // Get attendance records
-    const { data: attendance, error: attendanceError } = await supabase
+    const { data: attendanceData, error: attendanceError } = await supabase
       .from('attendance')
       .select(`
         id,
@@ -116,8 +115,19 @@ export const StudentService = {
       throw attendanceError;
     }
     
+    // Map attendance to our app's type
+    const attendance: Attendance[] = (attendanceData || []).map(record => ({
+      id: record.id,
+      bookId: record.book_id,
+      studentId: id,
+      date: new Date(record.date),
+      isPresent: record.is_present,
+      periodNumber: record.period_number,
+      teacherId: record.teacher_id
+    }));
+    
     // Get exam marks
-    const { data: marks, error: marksError } = await supabase
+    const { data: marksData, error: marksError } = await supabase
       .from('exam_marks')
       .select(`
         id,
@@ -137,8 +147,18 @@ export const StudentService = {
       throw marksError;
     }
     
+    // Map marks to our app's type
+    const marks: ExamMark[] = (marksData || []).map(record => ({
+      id: record.id,
+      bookId: record.book_id,
+      studentId: id,
+      examTypeId: record.exam_type?.id || '',
+      marks: Number(record.marks),
+      date: new Date(record.date)
+    }));
+    
     // Get invoices
-    const { data: invoices, error: invoicesError } = await supabase
+    const { data: invoicesData, error: invoicesError } = await supabase
       .from('invoices')
       .select(`
         id,
@@ -156,6 +176,17 @@ export const StudentService = {
       throw invoicesError;
     }
     
+    // Map invoices to our app's type
+    const invoices: Invoice[] = (invoicesData || []).map(record => ({
+      id: record.id,
+      studentId: id,
+      bookId: record.book_id,
+      amount: Number(record.amount),
+      isPaid: record.is_paid || false,
+      dueDate: new Date(record.due_date),
+      paidDate: record.paid_date ? new Date(record.paid_date) : undefined
+    }));
+    
     return {
       id: student.id,
       name: student.name,
@@ -168,9 +199,9 @@ export const StudentService = {
       createdAt: new Date(student.created_at),
       enrolledBooks,
       waitlistedBooks,
-      attendance: attendance || [],
-      marks: marks || [],
-      invoices: invoices || []
+      attendance,
+      marks,
+      invoices
     };
   },
   

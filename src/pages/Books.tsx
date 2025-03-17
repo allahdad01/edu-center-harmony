@@ -28,12 +28,14 @@ export default function Books() {
   const { data: books = [], isLoading, refetch } = useQuery({
     queryKey: ['books'],
     queryFn: BookService.getAllBooks,
-    onError: (error: any) => {
-      toast({
-        variant: "destructive",
-        title: "Error loading books",
-        description: error.message || "Could not load books. Please try again.",
-      });
+    meta: {
+      onError: (error: any) => {
+        toast({
+          variant: "destructive",
+          title: "Error loading books",
+          description: error.message || "Could not load books. Please try again.",
+        });
+      }
     }
   });
 

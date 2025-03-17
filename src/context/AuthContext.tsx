@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -66,7 +65,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         createdAt: userData?.created_at ? new Date(userData.created_at) : new Date(),
         contactNumber: userData?.contact_number || '',
         address: userData?.address || '',
-        fatherName: userData?.father_name || ''
       };
     } catch (error) {
       console.error('Error mapping user:', error);

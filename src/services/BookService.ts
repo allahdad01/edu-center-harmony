@@ -30,7 +30,23 @@ export const BookService = {
       periods: book.periods,
       isActive: book.is_active,
       teacherIds: book.teachers?.map((t: any) => t.teacher_id) || [],
-      students: book.students?.map((s: any) => ({ id: s.student_id })) || []
+      // Create minimal Student objects with just the required fields
+      students: book.students?.map((s: any) => ({
+        id: s.student_id,
+        name: '',  // Default empty values for required Student properties
+        email: '',
+        role: 'student' as const,
+        fatherName: '',
+        contactNumber: '',
+        address: '',
+        isActive: true,
+        createdAt: new Date(),
+        enrolledBooks: [],
+        waitlistedBooks: [],
+        attendance: [],
+        marks: [],
+        invoices: []
+      })) || []
     }));
   },
   
@@ -69,7 +85,18 @@ export const BookService = {
       students: data.students?.map((s: any) => ({
         id: s.student_id,
         name: s.student?.name || '',
-        isWaitlisted: s.is_waitlisted
+        email: s.student?.email || '',
+        role: 'student' as const,
+        fatherName: s.student?.father_name || '',
+        contactNumber: s.student?.contact_number || '',
+        address: s.student?.address || '',
+        isActive: true,
+        createdAt: new Date(),
+        enrolledBooks: [],
+        waitlistedBooks: [],
+        attendance: [],
+        marks: [],
+        invoices: []
       })) || []
     };
   },
