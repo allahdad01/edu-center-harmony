@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +10,7 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -58,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       return {
         id: userData?.id || supabaseUser.id,
-        name: userData?.name || 'Unknown User',
+        name: userData?.name || supabaseUser.user_metadata?.name || 'Unknown User',
         email: userData?.email || supabaseUser.email || '',
         role: roles[0] || 'student',
         isActive: userData?.is_active !== false,
@@ -143,6 +145,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const register = async (email: string, password: string, name: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name
+          }
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Registration successful",
+        description: "Please check your email to confirm your account.",
+      });
+      
+    } catch (err: any) {
+      setError(err.message || 'Failed to register');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       await supabase.auth.signOut();
@@ -162,6 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     error,
     login,
+    register,
     logout,
     isAuthenticated: !!user,
   };

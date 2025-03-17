@@ -1,108 +1,130 @@
-
+import { Book, Student, Teacher } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
-import { Book } from '@/types';
 
-export const BookService = {
-  // Fetch all books
-  async getAllBooks(): Promise<Book[]> {
-    const { data, error } = await supabase
-      .from('books')
-      .select(`
-        *,
-        department:departments(name),
-        teachers:teacher_books(teacher_id),
-        students:student_books(student_id)
-      `)
-      .order('name');
-      
-    if (error) {
+export class BookService {
+  static async getAllBooks(): Promise<Book[]> {
+    try {
+      const { data: books, error } = await supabase
+        .from('books')
+        .select(`
+          *,
+          departments:department_id(*),
+          teacher_books:teacher_books(
+            teacher:teacher_id(*)
+          ),
+          student_books:student_books(
+            student:student_id(*)
+          )
+        `);
+
+      if (error) throw error;
+
+      return books.map(book => ({
+        id: book.id,
+        name: book.name,
+        department: book.departments?.name || '',
+        startDate: new Date(book.start_date),
+        endDate: book.end_date ? new Date(book.end_date) : new Date(),
+        fee: Number(book.fee),
+        periods: book.periods,
+        isActive: book.is_active || false,
+        teacherIds: book.teacher_books?.map((tb: any) => tb.teacher_id) || [],
+        teachers: book.teacher_books?.map((tb: any) => ({
+          id: tb.teacher?.id,
+          name: tb.teacher?.name,
+          email: tb.teacher?.email,
+          isActive: tb.teacher?.is_active,
+          role: 'teacher',
+          specialization: tb.teacher?.specialization,
+          contactNumber: tb.teacher?.contact_number,
+          address: tb.teacher?.address
+        })) || [],
+        students: book.student_books?.map((sb: any) => ({
+          id: sb.student?.id,
+          name: sb.student?.name,
+          email: sb.student?.email,
+          contactNumber: sb.student?.contact_number,
+          address: sb.student?.address,
+          role: 'student',
+          isActive: sb.student?.is_active,
+          fatherName: sb.student?.father_name,
+          isWaitlisted: sb.is_waitlisted || false,
+          enrollmentDate: sb.enrollment_date ? new Date(sb.enrollment_date) : new Date(),
+          enrolledBooks: [],
+          waitlistedBooks: []
+        })) || []
+      }));
+    } catch (error) {
       console.error('Error fetching books:', error);
       throw error;
     }
-    
-    return data.map(book => ({
-      id: book.id,
-      name: book.name,
-      department: book.department?.name || book.department_id,
-      startDate: new Date(book.start_date),
-      endDate: book.end_date ? new Date(book.end_date) : undefined,
-      fee: Number(book.fee),
-      periods: book.periods,
-      isActive: book.is_active,
-      teacherIds: book.teachers?.map((t: any) => t.teacher_id) || [],
-      // Create minimal Student objects with just the required fields
-      students: book.students?.map((s: any) => ({
-        id: s.student_id,
-        name: '',  // Default empty values for required Student properties
-        email: '',
-        role: 'student' as const,
-        fatherName: '',
-        contactNumber: '',
-        address: '',
-        isActive: true,
-        createdAt: new Date(),
+  }
+
+  static async getBookById(id: string): Promise<Book> {
+    try {
+      const { data: book, error } = await supabase
+        .from('books')
+        .select(`
+          *,
+          departments:department_id(*),
+          teacher_books:teacher_books(
+            teacher:teacher_id(*)
+          ),
+          student_books:student_books(
+            student:student_id(*)
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      const teachers: Teacher[] = book.teacher_books?.map((tb: any) => ({
+        id: tb.teacher?.id,
+        name: tb.teacher?.name,
+        email: tb.teacher?.email,
+        isActive: tb.teacher?.is_active,
+        role: 'teacher',
+        specialization: tb.teacher?.specialization,
+        contactNumber: tb.teacher?.contact_number,
+        address: tb.teacher?.address
+      })) || [];
+
+      const students: Student[] = book.student_books?.map((sb: any) => ({
+        id: sb.student?.id,
+        name: sb.student?.name,
+        email: sb.student?.email,
+        contactNumber: sb.student?.contact_number,
+        address: sb.student?.address,
+        role: 'student',
+        isActive: sb.student?.is_active,
+        fatherName: sb.student?.father_name,
+        isWaitlisted: sb.is_waitlisted || false,
+        enrollmentDate: sb.enrollment_date ? new Date(sb.enrollment_date) : new Date(),
         enrolledBooks: [],
-        waitlistedBooks: [],
-        attendance: [],
-        marks: [],
-        invoices: []
-      })) || []
-    }));
-  },
-  
-  // Fetch a single book by ID
-  async getBookById(id: string): Promise<Book> {
-    const { data, error } = await supabase
-      .from('books')
-      .select(`
-        *,
-        department:departments(name),
-        teachers:teacher_books(teacher_id),
-        students:student_books(
-          student_id,
-          is_waitlisted,
-          student:students(*)
-        )
-      `)
-      .eq('id', id)
-      .single();
-      
-    if (error) {
+        waitlistedBooks: []
+      })) || [];
+
+      return {
+        id: book.id,
+        name: book.name,
+        department: book.departments?.name || '',
+        startDate: new Date(book.start_date),
+        endDate: book.end_date ? new Date(book.end_date) : new Date(),
+        fee: Number(book.fee),
+        periods: book.periods,
+        isActive: book.is_active || false,
+        teacherIds: book.teacher_books?.map((tb: any) => tb.teacher_id) || [],
+        teachers,
+        students
+      };
+    } catch (error) {
       console.error('Error fetching book:', error);
       throw error;
     }
-    
-    return {
-      id: data.id,
-      name: data.name,
-      department: data.department?.name || data.department_id,
-      startDate: new Date(data.start_date),
-      endDate: data.end_date ? new Date(data.end_date) : undefined,
-      fee: Number(data.fee),
-      periods: data.periods,
-      isActive: data.is_active,
-      teacherIds: data.teachers?.map((t: any) => t.teacher_id) || [],
-      students: data.students?.map((s: any) => ({
-        id: s.student_id,
-        name: s.student?.name || '',
-        email: s.student?.email || '',
-        role: 'student' as const,
-        fatherName: s.student?.father_name || '',
-        contactNumber: s.student?.contact_number || '',
-        address: s.student?.address || '',
-        isActive: true,
-        createdAt: new Date(),
-        enrolledBooks: [],
-        waitlistedBooks: [],
-        attendance: [],
-        marks: [],
-        invoices: []
-      })) || []
-    };
-  },
-  
-  // Create a new book
-  async createBook(book: Partial<Book>): Promise<Book> {
+  }
+
+  static async createBook(book: Partial<Book>): Promise<Book> {
     // First get department ID from department name
     let departmentId = book.department;
     
@@ -169,10 +191,9 @@ export const BookService = {
       teacherIds: book.teacherIds || [],
       students: []
     };
-  },
-  
-  // Update a book
-  async updateBook(id: string, book: Partial<Book>): Promise<void> {
+  }
+
+  static async updateBook(id: string, book: Partial<Book>): Promise<void> {
     // First get department ID from department name if it's a string
     let departmentId = book.department;
     
@@ -239,10 +260,9 @@ export const BookService = {
         }
       }
     }
-  },
-  
-  // Delete a book
-  async deleteBook(id: string): Promise<void> {
+  }
+
+  static async deleteBook(id: string): Promise<void> {
     const { error } = await supabase
       .from('books')
       .delete()
@@ -252,10 +272,9 @@ export const BookService = {
       console.error('Error deleting book:', error);
       throw error;
     }
-  },
-  
-  // Get all departments
-  async getAllDepartments(): Promise<{ id: string; name: string }[]> {
+  }
+
+  static async getAllDepartments(): Promise<{ id: string; name: string }[]> {
     const { data, error } = await supabase
       .from('departments')
       .select('id, name')
@@ -268,4 +287,4 @@ export const BookService = {
     
     return data;
   }
-};
+}

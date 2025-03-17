@@ -1,9 +1,9 @@
+import { Student, Attendance, ExamMark, Invoice } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
-import { Student, Book, Attendance, ExamMark, Invoice } from '@/types';
 
-export const StudentService = {
+export class StudentService {
   // Fetch all students
-  async getAllStudents(): Promise<Student[]> {
+  static async getAllStudents(): Promise<Student[]> {
     const { data, error } = await supabase
       .from('students')
       .select('*')
@@ -30,10 +30,10 @@ export const StudentService = {
       marks: [],
       invoices: []
     }));
-  },
+  }
   
   // Fetch a single student by ID with enrolled books
-  async getStudentById(id: string): Promise<Student> {
+  static async getStudentById(id: string): Promise<Student> {
     // Get basic student data
     const { data: student, error: studentError } = await supabase
       .from('students')
@@ -203,10 +203,10 @@ export const StudentService = {
       marks,
       invoices
     };
-  },
+  }
   
   // Create a new student
-  async createStudent(student: Partial<Student>): Promise<Student> {
+  static async createStudent(student: Partial<Student>): Promise<Student> {
     const { data, error } = await supabase
       .from('students')
       .insert({
@@ -241,10 +241,10 @@ export const StudentService = {
       marks: [],
       invoices: []
     };
-  },
+  }
   
   // Update a student
-  async updateStudent(id: string, student: Partial<Student>): Promise<void> {
+  static async updateStudent(id: string, student: Partial<Student>): Promise<void> {
     const { error } = await supabase
       .from('students')
       .update({
@@ -261,10 +261,10 @@ export const StudentService = {
       console.error('Error updating student:', error);
       throw error;
     }
-  },
+  }
   
   // Delete a student
-  async deleteStudent(id: string): Promise<void> {
+  static async deleteStudent(id: string): Promise<void> {
     const { error } = await supabase
       .from('students')
       .delete()
@@ -274,10 +274,10 @@ export const StudentService = {
       console.error('Error deleting student:', error);
       throw error;
     }
-  },
+  }
   
   // Enroll a student in a book
-  async enrollStudentInBook(studentId: string, bookId: string, isWaitlisted: boolean = false): Promise<void> {
+  static async enrollStudentInBook(studentId: string, bookId: string, isWaitlisted: boolean = false): Promise<void> {
     const { error } = await supabase
       .from('student_books')
       .insert({
@@ -290,10 +290,10 @@ export const StudentService = {
       console.error('Error enrolling student in book:', error);
       throw error;
     }
-  },
+  }
   
   // Remove a student from a book
-  async removeStudentFromBook(studentId: string, bookId: string): Promise<void> {
+  static async removeStudentFromBook(studentId: string, bookId: string): Promise<void> {
     const { error } = await supabase
       .from('student_books')
       .delete()
@@ -305,4 +305,112 @@ export const StudentService = {
       throw error;
     }
   }
-};
+
+  // Get student attendance
+  static async getStudentAttendance(studentId: string): Promise<Attendance[]> {
+    try {
+      const { data, error } = await supabase
+        .from('attendance')
+        .select(`
+          *,
+          book:book_id(*),
+          teacher:teacher_id(*)
+        `)
+        .eq('student_id', studentId);
+
+      if (error) throw error;
+
+      return data.map((item: any) => ({
+        id: item.id,
+        date: new Date(item.date),
+        isPresent: item.is_present,
+        periodNumber: item.period_number,
+        bookId: item.book_id,
+        studentId: item.student_id,
+        teacherId: item.teacher_id,
+        book: {
+          id: item.book?.id,
+          name: item.book?.name,
+        },
+        teacher: {
+          id: item.teacher?.id,
+          name: item.teacher?.name,
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching student attendance:', error);
+      throw error;
+    }
+  }
+
+  // Get student exams
+  static async getStudentExams(studentId: string): Promise<ExamMark[]> {
+    try {
+      const { data, error } = await supabase
+        .from('exam_marks')
+        .select(`
+          *,
+          book:book_id(*),
+          exam_type:exam_type_id(*)
+        `)
+        .eq('student_id', studentId);
+
+      if (error) throw error;
+
+      return data.map((item: any) => ({
+        id: item.id,
+        marks: Number(item.marks),
+        date: new Date(item.date),
+        bookId: item.book_id,
+        studentId: item.student_id,
+        examTypeId: item.exam_type_id,
+        book: {
+          id: item.book?.id,
+          name: item.book?.name,
+        },
+        examType: {
+          id: item.exam_type?.id,
+          name: item.exam_type?.name,
+          maxMarks: item.exam_type?.max_marks,
+          weightage: item.exam_type?.weightage,
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching student exams:', error);
+      throw error;
+    }
+  }
+
+  // Get student invoices
+  static async getStudentInvoices(studentId: string): Promise<Invoice[]> {
+    try {
+      const { data, error } = await supabase
+        .from('invoices')
+        .select(`
+          *,
+          book:book_id(*)
+        `)
+        .eq('student_id', studentId);
+
+      if (error) throw error;
+
+      return data.map((item: any) => ({
+        id: item.id,
+        amount: Number(item.amount),
+        isPaid: item.is_paid,
+        dueDate: new Date(item.due_date),
+        paidDate: item.paid_date ? new Date(item.paid_date) : undefined,
+        createdAt: new Date(item.created_at),
+        bookId: item.book_id,
+        studentId: item.student_id,
+        book: {
+          id: item.book?.id,
+          name: item.book?.name,
+        }
+      }));
+    } catch (error) {
+      console.error('Error fetching student invoices:', error);
+      throw error;
+    }
+  }
+}
