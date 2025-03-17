@@ -64,8 +64,18 @@ export default function Login() {
   });
 
   // If already authenticated, redirect to dashboard
-  if (isAuthenticated && !isLoading) {
+  if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  // Display a loading indicator only when checking authentication status
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Checking authentication...</span>
+      </div>
+    );
   }
 
   const onLoginSubmit = async (data: LoginFormValues) => {

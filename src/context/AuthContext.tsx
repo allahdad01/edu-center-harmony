@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from('teachers')
           .select('*')
           .eq('user_id', supabaseUser.id)
-          .single();
+          .maybeSingle();
           
         if (error) throw error;
         userData = data;
@@ -52,10 +52,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from('students')
           .select('*')
           .eq('user_id', supabaseUser.id)
-          .single();
+          .maybeSingle();
           
         if (error) throw error;
         userData = data;
+      }
+      
+      // If we don't have user data, create a minimal user object
+      if (!userData) {
+        return {
+          id: supabaseUser.id,
+          name: supabaseUser.user_metadata?.name || 'Unknown User',
+          email: supabaseUser.email || '',
+          role: roles[0] || 'student',
+          isActive: true,
+          createdAt: new Date(),
+          contactNumber: '',
+          address: '',
+        };
       }
       
       return {
@@ -70,7 +84,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
     } catch (error) {
       console.error('Error mapping user:', error);
-      throw error;
+      // Return a minimal user object on error
+      return {
+        id: supabaseUser.id,
+        name: supabaseUser.user_metadata?.name || 'Unknown User',
+        email: supabaseUser.email || '',
+        role: 'student',
+        isActive: true,
+        createdAt: new Date(),
+        contactNumber: '',
+        address: '',
+      };
     }
   };
 
@@ -82,8 +106,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
-          const mappedUser = await mapSupabaseUser(session.user);
-          setUser(mappedUser);
+          try {
+            const mappedUser = await mapSupabaseUser(session.user);
+            setUser(mappedUser);
+          } catch (err) {
+            console.error('Error mapping user:', err);
+            // Continue without setting user
+          }
         }
       } catch (err) {
         console.error('Auth error:', err);
