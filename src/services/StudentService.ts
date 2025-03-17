@@ -1,4 +1,4 @@
-import { Student, Attendance, ExamMark, Invoice } from '@/types';
+import { Student, Attendance, ExamMark, Invoice, Book } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 
 export class StudentService {
@@ -322,20 +322,20 @@ export class StudentService {
 
       return data.map((item: any) => ({
         id: item.id,
+        bookId: item.book_id,
+        studentId: item.student_id,
         date: new Date(item.date),
         isPresent: item.is_present,
         periodNumber: item.period_number,
-        bookId: item.book_id,
-        studentId: item.student_id,
         teacherId: item.teacher_id,
-        book: {
-          id: item.book?.id,
-          name: item.book?.name,
-        },
-        teacher: {
-          id: item.teacher?.id,
-          name: item.teacher?.name,
-        }
+        book: item.book ? {
+          id: item.book.id,
+          name: item.book.name,
+        } : undefined,
+        teacher: item.teacher ? {
+          id: item.teacher.id,
+          name: item.teacher.name,
+        } : undefined
       }));
     } catch (error) {
       console.error('Error fetching student attendance:', error);
@@ -359,21 +359,21 @@ export class StudentService {
 
       return data.map((item: any) => ({
         id: item.id,
-        marks: Number(item.marks),
-        date: new Date(item.date),
         bookId: item.book_id,
         studentId: item.student_id,
         examTypeId: item.exam_type_id,
-        book: {
-          id: item.book?.id,
-          name: item.book?.name,
-        },
-        examType: {
-          id: item.exam_type?.id,
-          name: item.exam_type?.name,
-          maxMarks: item.exam_type?.max_marks,
-          weightage: item.exam_type?.weightage,
-        }
+        marks: Number(item.marks),
+        date: new Date(item.date),
+        book: item.book ? {
+          id: item.book.id,
+          name: item.book.name,
+        } : undefined,
+        examType: item.exam_type ? {
+          id: item.exam_type.id,
+          name: item.exam_type.name,
+          maxMarks: item.exam_type.max_marks,
+          weightage: item.exam_type.weightage,
+        } : undefined
       }));
     } catch (error) {
       console.error('Error fetching student exams:', error);
@@ -396,17 +396,16 @@ export class StudentService {
 
       return data.map((item: any) => ({
         id: item.id,
+        studentId: item.student_id,
+        bookId: item.book_id,
         amount: Number(item.amount),
         isPaid: item.is_paid,
         dueDate: new Date(item.due_date),
         paidDate: item.paid_date ? new Date(item.paid_date) : undefined,
-        createdAt: new Date(item.created_at),
-        bookId: item.book_id,
-        studentId: item.student_id,
-        book: {
-          id: item.book?.id,
-          name: item.book?.name,
-        }
+        book: item.book ? {
+          id: item.book.id,
+          name: item.book.name,
+        } : undefined
       }));
     } catch (error) {
       console.error('Error fetching student invoices:', error);

@@ -44,6 +44,7 @@ export interface Book {
   periods: number;
   isActive: boolean;
   teacherIds: string[];
+  teachers?: Teacher[];
   nextBookId?: string;
   students: Student[];
 }
