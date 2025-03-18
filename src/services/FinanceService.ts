@@ -349,7 +349,7 @@ export class FinanceService {
     amount: number, 
     month: string, 
     year: number,
-    bookDetails?: { bookId: string; days: number; amount: number }[]
+    bookDetails?: { bookId: string; days: number; amount: number; bookName?: string }[]
   ): Promise<Salary> {
     try {
       // Insert salary record
@@ -383,6 +383,15 @@ export class FinanceService {
         if (detailsError) throw detailsError;
       }
       
+      // When returning the data, ensure bookName is included for each book detail
+      // If bookName wasn't provided, we'll use 'Unknown Book' as a fallback
+      const processedBookDetails = bookDetails?.map(detail => ({
+        bookId: detail.bookId,
+        bookName: detail.bookName || 'Unknown Book',
+        days: detail.days,
+        amount: detail.amount
+      })) || [];
+      
       return {
         id: salaryData.id,
         userId: salaryData.teacher_id,
@@ -393,7 +402,7 @@ export class FinanceService {
         paidDate: salaryData.paid_date ? new Date(salaryData.paid_date) : undefined,
         advanceAmount: salaryData.advance_amount ? Number(salaryData.advance_amount) : undefined,
         advanceDate: salaryData.advance_date ? new Date(salaryData.advance_date) : undefined,
-        bookDetails: bookDetails || []
+        bookDetails: processedBookDetails
       };
     } catch (error) {
       console.error('Error creating salary record:', error);
