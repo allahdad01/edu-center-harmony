@@ -15,6 +15,7 @@ import Attendance from '@/pages/Attendance';
 import Exams from '@/pages/Exams';
 import Schedule from '@/pages/Schedule';
 import Profile from '@/pages/Profile';
+import UserManagement from '@/pages/UserManagement';
 
 // Layout components
 import DashboardLayout from '@/routes/DashboardLayout';
@@ -25,6 +26,7 @@ const STAFF_ROLES: UserRole[] = ['teacher', 'finance', 'controller', 'admin', 's
 const ADMIN_ROLES: UserRole[] = ['admin', 'superadmin'];
 const FINANCE_ROLES: UserRole[] = ['finance', 'admin', 'superadmin'];
 const CONTROLLER_ROLES: UserRole[] = ['controller', 'admin', 'superadmin'];
+const SUPER_ADMIN_ONLY: UserRole[] = ['superadmin'];
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -66,6 +68,20 @@ export default function ProtectedRoutes() {
           <ProtectedRoute>
             <DashboardLayout>
               <Profile />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* User Management - for admin and super admin */}
+      <Route
+        path="/users"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <RoleProtectedRoute allowedRoles={ADMIN_ROLES}>
+                <UserManagement />
+              </RoleProtectedRoute>
             </DashboardLayout>
           </ProtectedRoute>
         }

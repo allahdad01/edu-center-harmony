@@ -3,6 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { User, UserRole } from '@/types';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
+export interface CreateUserRequest {
+  name: string;
+  email: string;
+  password: string;
+  contactNumber: string;
+  address?: string;
+}
+
 export class AuthService {
   static async getUserRoles(userId: string): Promise<UserRole[]> {
     try {
@@ -42,6 +50,201 @@ export class AuthService {
   
   static async signOut() {
     return await supabase.auth.signOut();
+  }
+
+  // Check if super admin exists in the system
+  static async checkSuperAdminExists(): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .rpc('has_any_super_admin');
+        
+      if (error) throw error;
+      return !!data;
+    } catch (error) {
+      console.error('Error checking for super admin:', error);
+      return false;
+    }
+  }
+
+  // Create a super admin (should only be called once during initial setup)
+  static async createSuperAdmin(userData: CreateUserRequest): Promise<User> {
+    try {
+      // Check if super admin already exists
+      const superAdminExists = await this.checkSuperAdminExists();
+      if (superAdminExists) {
+        throw new Error('Super Admin already exists');
+      }
+
+      // Create user account
+      const { data: authData, error: authError } = await this.signUp(
+        userData.email, 
+        userData.password, 
+        userData.name
+      );
+      
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Failed to create user account');
+      
+      // Assign superadmin role
+      await this.assignRole(authData.user.id, 'superadmin');
+      
+      // Create admin record in database
+      const { data: adminData, error: adminError } = await supabase
+        .from('teachers')  // Using teachers table for admin records
+        .insert({
+          name: userData.name,
+          email: userData.email,
+          contact_number: userData.contactNumber,
+          address: userData.address || null,
+          user_id: authData.user.id,
+          is_active: true,
+          specialization: 'System Administration'
+        })
+        .select()
+        .single();
+        
+      if (adminError) throw adminError;
+      
+      return this.mapSupabaseUser(authData.user);
+    } catch (error) {
+      console.error('Error creating super admin:', error);
+      throw error;
+    }
+  }
+
+  // Create a branch admin
+  static async createAdmin(userData: CreateUserRequest, branchId: string): Promise<User> {
+    try {
+      // Create user account
+      const { data: authData, error: authError } = await this.signUp(
+        userData.email, 
+        userData.password, 
+        userData.name
+      );
+      
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Failed to create user account');
+      
+      // Assign admin role
+      await this.assignRole(authData.user.id, 'admin');
+      
+      // Create admin record in database
+      const { data: adminData, error: adminError } = await supabase
+        .from('teachers')  // Using teachers table for admin records
+        .insert({
+          name: userData.name,
+          email: userData.email,
+          contact_number: userData.contactNumber,
+          address: userData.address || null,
+          user_id: authData.user.id,
+          is_active: true,
+          specialization: 'Branch Administration'
+        })
+        .select()
+        .single();
+        
+      if (adminError) throw adminError;
+      
+      // Assign admin to branch
+      const { error: branchAssignError } = await supabase
+        .from('branch_admins')
+        .insert({
+          branch_id: branchId,
+          admin_id: adminData.id
+        });
+        
+      if (branchAssignError) throw branchAssignError;
+      
+      return this.mapSupabaseUser(authData.user);
+    } catch (error) {
+      console.error('Error creating admin:', error);
+      throw error;
+    }
+  }
+
+  // Create a staff user (teacher, finance, controller)
+  static async createStaffUser(userData: CreateUserRequest, role: UserRole): Promise<User> {
+    try {
+      // Validate role
+      if (!['teacher', 'finance', 'controller'].includes(role)) {
+        throw new Error(`Invalid role for staff user: ${role}`);
+      }
+
+      // Create user account
+      const { data: authData, error: authError } = await this.signUp(
+        userData.email, 
+        userData.password, 
+        userData.name
+      );
+      
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Failed to create user account');
+      
+      // Assign role
+      await this.assignRole(authData.user.id, role);
+      
+      // Create staff record in database
+      const { data: staffData, error: staffError } = await supabase
+        .from('teachers')  // Using teachers table for staff records
+        .insert({
+          name: userData.name,
+          email: userData.email,
+          contact_number: userData.contactNumber,
+          address: userData.address || null,
+          user_id: authData.user.id,
+          is_active: true,
+          specialization: role === 'teacher' ? 'General' : role.charAt(0).toUpperCase() + role.slice(1)
+        })
+        .select()
+        .single();
+        
+      if (staffError) throw staffError;
+      
+      return this.mapSupabaseUser(authData.user);
+    } catch (error) {
+      console.error(`Error creating ${role}:`, error);
+      throw error;
+    }
+  }
+
+  // Create a student user
+  static async createStudent(userData: CreateUserRequest, fatherName: string): Promise<User> {
+    try {
+      // Create user account
+      const { data: authData, error: authError } = await this.signUp(
+        userData.email, 
+        userData.password, 
+        userData.name
+      );
+      
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Failed to create user account');
+      
+      // Assign student role
+      await this.assignRole(authData.user.id, 'student');
+      
+      // Create student record in database
+      const { data: studentData, error: studentError } = await supabase
+        .from('students')
+        .insert({
+          name: userData.name,
+          email: userData.email,
+          contact_number: userData.contactNumber,
+          address: userData.address || null,
+          user_id: authData.user.id,
+          father_name: fatherName,
+          is_active: true
+        })
+        .select()
+        .single();
+        
+      if (studentError) throw studentError;
+      
+      return this.mapSupabaseUser(authData.user);
+    } catch (error) {
+      console.error('Error creating student:', error);
+      throw error;
+    }
   }
 
   // Function to map Supabase user to our app's User type
