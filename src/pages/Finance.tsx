@@ -1,5 +1,5 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import PageTransition from '@/components/layout/PageTransition';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -24,12 +24,37 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { CreditCard, DollarSign, FileText, MoreHorizontal, Plus, Search, TrendingUp, User, Wallet, Download, Filter } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
+import { FinanceService } from '@/services';
+import { Invoice, Expense } from '@/types';
 
 export default function Finance() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data
+  useEffect(() => {
+    const fetchFinancialData = async () => {
+      try {
+        setIsLoading(true);
+        
+        const [invoicesData, expensesData] = await Promise.all([
+          FinanceService.getAllInvoices(),
+          FinanceService.getAllExpenses()
+        ]);
+        
+        setInvoices(invoicesData);
+        setExpenses(expensesData);
+      } catch (error) {
+        console.error('Error fetching financial data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchFinancialData();
+  }, []);
+
   const transactions = [
     { id: 'INV-001', date: new Date('2023-06-15'), studentName: 'Ahmad Rahimi', studentId: 's1', amount: 1500, type: 'payment', status: 'completed', bookName: 'English Grammar Level 3' },
     { id: 'INV-002', date: new Date('2023-06-18'), studentName: 'Fatima Ahmadi', studentId: 's2', amount: 1800, type: 'payment', status: 'pending', bookName: 'Mathematics Foundation' },
@@ -40,7 +65,6 @@ export default function Finance() {
     { id: 'EXP-003', date: new Date('2023-07-02'), description: 'Electricity Bill', amount: 300, type: 'expense', category: 'utilities' },
   ];
 
-  // Filter transactions based on search term
   const filteredTransactions = transactions.filter(
     (transaction) => {
       if ('studentName' in transaction) {
@@ -53,7 +77,6 @@ export default function Finance() {
     }
   );
 
-  // Calculate totals
   const totalIncome = transactions
     .filter(t => t.type === 'payment')
     .reduce((sum, t) => sum + t.amount, 0);
@@ -63,6 +86,14 @@ export default function Finance() {
     .reduce((sum, t) => sum + t.amount, 0);
   
   const balance = totalIncome - totalExpenses;
+
+  const handleNewInvoice = async () => {
+    console.log('Would use FinanceService.createInvoice() to create a new invoice');
+  };
+
+  const handleNewExpense = async () => {
+    console.log('Would use FinanceService.createExpense() to create a new expense');
+  };
 
   return (
     <PageTransition>
@@ -75,7 +106,7 @@ export default function Finance() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button>
+            <Button onClick={handleNewInvoice}>
               <Plus className="mr-2 h-4 w-4" />
               New Transaction
             </Button>
@@ -86,7 +117,6 @@ export default function Finance() {
           </div>
         </div>
 
-        {/* Financial Summary */}
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
