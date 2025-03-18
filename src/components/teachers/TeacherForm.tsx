@@ -23,7 +23,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { SalaryType } from "@/types";
+import { SalaryType, Teacher } from "@/types";
+import { TeacherService } from "@/services/TeacherService";
 
 const formSchema = z.object({
   name: z.string().min(3, { message: "Name must be at least 3 characters" }),
@@ -33,13 +34,14 @@ const formSchema = z.object({
   specialization: z.string().min(3, { message: "Specialization must be at least 3 characters" }),
   salaryType: z.enum(["fixed", "per-book", "percentage"] as const),
   salaryAmount: z.coerce.number().min(1, { message: "Salary amount must be greater than 0" }),
+  password: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface TeacherFormProps {
   onSuccess?: () => void;
-  initialData?: Partial<FormValues>;
+  initialData?: Partial<Teacher>;
 }
 
 export default function TeacherForm({ onSuccess, initialData }: TeacherFormProps) {
@@ -56,6 +58,7 @@ export default function TeacherForm({ onSuccess, initialData }: TeacherFormProps
       specialization: initialData?.specialization || "",
       salaryType: initialData?.salaryType || "fixed",
       salaryAmount: initialData?.salaryAmount || 0,
+      password: undefined,
     },
   });
 
@@ -63,16 +66,41 @@ export default function TeacherForm({ onSuccess, initialData }: TeacherFormProps
     setIsSubmitting(true);
     
     try {
-      // This would be an API call in a real application
-      console.log("Submitting teacher data:", data);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Teacher added successfully",
-        description: `${data.name} has been added to the system.`,
-      });
+      if (initialData?.id) {
+        // Update existing teacher
+        await TeacherService.updateTeacher(initialData.id, {
+          name: data.name,
+          email: data.email,
+          contactNumber: data.contactNumber,
+          address: data.address,
+          specialization: data.specialization,
+          salaryType: data.salaryType,
+          salaryAmount: data.salaryAmount,
+        });
+        
+        toast({
+          title: "Teacher updated successfully",
+          description: `${data.name}'s information has been updated.`,
+        });
+      } else {
+        // Create new teacher
+        await TeacherService.createTeacher({
+          name: data.name,
+          email: data.email,
+          contactNumber: data.contactNumber,
+          address: data.address,
+          specialization: data.specialization,
+          salaryType: data.salaryType,
+          salaryAmount: data.salaryAmount,
+          isActive: true,
+          dateOfJoining: new Date(),
+        }, data.password);
+        
+        toast({
+          title: "Teacher added successfully",
+          description: `${data.name} has been added to the system.`,
+        });
+      }
       
       if (onSuccess) {
         onSuccess();
@@ -82,12 +110,12 @@ export default function TeacherForm({ onSuccess, initialData }: TeacherFormProps
       if (!initialData) {
         form.reset();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting form:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "There was a problem adding the teacher. Please try again.",
+        description: error.message || "There was a problem with the teacher. Please try again.",
       });
     } finally {
       setIsSubmitting(false);
@@ -106,6 +134,8 @@ export default function TeacherForm({ onSuccess, initialData }: TeacherFormProps
         return type;
     }
   };
+
+  const isNewTeacher = !initialData?.id;
 
   return (
     <Form {...form}>
@@ -138,6 +168,22 @@ export default function TeacherForm({ onSuccess, initialData }: TeacherFormProps
               </FormItem>
             )}
           />
+          
+          {isNewTeacher && (
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password (optional)</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="Create account password" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
           
           <FormField
             control={form.control}
