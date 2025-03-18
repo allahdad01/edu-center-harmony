@@ -2,6 +2,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '@/hooks/use-permissions';
 import {
   BarChart3,
   BookOpen,
@@ -27,80 +28,75 @@ interface NavItem {
   title: string;
   href: string;
   icon: React.ReactNode;
-  roles?: string[];
+  requiredPermission?: string;
 }
 
 export default function Sidebar({ isOpen }: SidebarProps) {
   const { user } = useAuth();
   const location = useLocation();
-  const role = user?.role || 'student';
+  const { permissions } = usePermissions();
 
   const mainNavItems: NavItem[] = [
     {
       title: 'Dashboard',
       href: '/dashboard',
       icon: <LayoutDashboard className="h-5 w-5" />,
-      roles: ['student', 'teacher', 'finance', 'controller', 'admin', 'superadmin'],
     },
     {
       title: 'Students',
       href: '/students',
       icon: <GraduationCap className="h-5 w-5" />,
-      roles: ['teacher', 'controller', 'admin', 'superadmin'],
+      requiredPermission: 'viewStudents',
     },
     {
       title: 'Teachers',
       href: '/teachers',
       icon: <Users className="h-5 w-5" />,
-      roles: ['admin', 'superadmin', 'controller'],
+      requiredPermission: 'viewTeachers',
     },
     {
       title: 'Books/Courses',
       href: '/books',
       icon: <BookOpen className="h-5 w-5" />,
-      roles: ['teacher', 'student', 'controller', 'admin', 'superadmin'],
     },
     {
       title: 'Schedule',
       href: '/schedule',
       icon: <Calendar className="h-5 w-5" />,
-      roles: ['student', 'teacher', 'controller', 'admin', 'superadmin'],
     },
     {
       title: 'Attendance',
       href: '/attendance',
       icon: <FileText className="h-5 w-5" />,
-      roles: ['student', 'teacher', 'controller', 'admin', 'superadmin'],
+      requiredPermission: 'manageAttendance',
     },
     {
       title: 'Exams & Marks',
       href: '/exams',
       icon: <Layers className="h-5 w-5" />,
-      roles: ['student', 'teacher', 'controller', 'admin', 'superadmin'],
     },
     {
       title: 'Finance',
       href: '/finance',
       icon: <CreditCard className="h-5 w-5" />,
-      roles: ['finance', 'admin', 'superadmin'],
+      requiredPermission: 'viewFinance',
     },
     {
       title: 'Invoices',
       href: '/invoices',
       icon: <ShoppingCart className="h-5 w-5" />,
-      roles: ['student', 'finance', 'admin', 'superadmin'],
     },
     {
       title: 'Reports',
       href: '/reports',
       icon: <BarChart3 className="h-5 w-5" />,
-      roles: ['controller', 'finance', 'admin', 'superadmin'],
+      requiredPermission: 'viewReports',
     },
     {
       title: 'Branches',
       href: '/branches',
       icon: <Building className="h-5 w-5" />,
-      roles: ['superadmin'],
+      requiredPermission: 'manageBranch',
     },
   ];
 
@@ -109,18 +105,17 @@ export default function Sidebar({ isOpen }: SidebarProps) {
       title: 'Profile',
       href: '/profile',
       icon: <User className="h-5 w-5" />,
-      roles: ['student', 'teacher', 'finance', 'controller', 'admin', 'superadmin'],
     },
     {
       title: 'Settings',
       href: '/settings',
       icon: <Settings className="h-5 w-5" />,
-      roles: ['student', 'teacher', 'finance', 'controller', 'admin', 'superadmin'],
     },
   ];
 
+  // Filter navbar items based on permissions
   const filteredMainNavItems = mainNavItems.filter(
-    (item) => !item.roles || item.roles.includes(role)
+    (item) => !item.requiredPermission || permissions[item.requiredPermission]
   );
 
   return (

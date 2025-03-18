@@ -15,12 +15,17 @@ import Finance from '@/pages/Finance';
 import Attendance from '@/pages/Attendance';
 import Exams from '@/pages/Exams';
 import Schedule from '@/pages/Schedule';
+import Profile from '@/pages/Profile';
 import NotFound from '@/pages/NotFound';
 
 // Layout components
 import Navbar from '@/components/layout/Navbar';
 import Sidebar from '@/components/layout/Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
+
+// Auth components
+import RoleProtectedRoute from '@/components/auth/RoleProtectedRoute';
+import { UserRole } from '@/types';
 
 // Protected route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -80,6 +85,13 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+// Role definitions
+const ALL_ROLES: UserRole[] = ['student', 'teacher', 'finance', 'controller', 'admin', 'superadmin'];
+const STAFF_ROLES: UserRole[] = ['teacher', 'finance', 'controller', 'admin', 'superadmin'];
+const ADMIN_ROLES: UserRole[] = ['admin', 'superadmin'];
+const FINANCE_ROLES: UserRole[] = ['finance', 'admin', 'superadmin'];
+const CONTROLLER_ROLES: UserRole[] = ['controller', 'admin', 'superadmin'];
+
 export default function AppRoutes() {
   const location = useLocation();
 
@@ -101,12 +113,27 @@ export default function AppRoutes() {
           } 
         />
         
+        {/* Profile page - accessible by all authenticated users */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Profile />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        
+        {/* Role-protected routes */}
         <Route 
           path="/students" 
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <Students />
+                <RoleProtectedRoute allowedRoles={STAFF_ROLES}>
+                  <Students />
+                </RoleProtectedRoute>
               </DashboardLayout>
             </ProtectedRoute>
           } 
@@ -117,7 +144,9 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <Teachers />
+                <RoleProtectedRoute allowedRoles={ADMIN_ROLES}>
+                  <Teachers />
+                </RoleProtectedRoute>
               </DashboardLayout>
             </ProtectedRoute>
           } 
@@ -139,7 +168,9 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <Finance />
+                <RoleProtectedRoute allowedRoles={FINANCE_ROLES}>
+                  <Finance />
+                </RoleProtectedRoute>
               </DashboardLayout>
             </ProtectedRoute>
           } 
@@ -150,7 +181,9 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <Attendance />
+                <RoleProtectedRoute allowedRoles={STAFF_ROLES}>
+                  <Attendance />
+                </RoleProtectedRoute>
               </DashboardLayout>
             </ProtectedRoute>
           } 
@@ -161,7 +194,9 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <Exams />
+                <RoleProtectedRoute allowedRoles={STAFF_ROLES}>
+                  <Exams />
+                </RoleProtectedRoute>
               </DashboardLayout>
             </ProtectedRoute>
           } 
@@ -183,7 +218,9 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <Finance />
+                <RoleProtectedRoute allowedRoles={[...FINANCE_ROLES, 'student']}>
+                  <Finance />
+                </RoleProtectedRoute>
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -194,7 +231,9 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <DashboardLayout>
-                <Exams />
+                <RoleProtectedRoute allowedRoles={CONTROLLER_ROLES}>
+                  <Exams />
+                </RoleProtectedRoute>
               </DashboardLayout>
             </ProtectedRoute>
           }

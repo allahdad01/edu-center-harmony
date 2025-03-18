@@ -6,3 +6,4 @@ export * from './StudentService';
 export * from './AttendanceService';
 export * from './ExamService';
 export * from './FinanceService';
+export * from './ProfileService';
