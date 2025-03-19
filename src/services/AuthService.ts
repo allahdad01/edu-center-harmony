@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { User, UserRole } from '@/types';
 import { User as SupabaseUser } from '@supabase/supabase-js';
@@ -145,13 +144,11 @@ export class AuthService {
         
       if (adminError) throw adminError;
       
-      // Assign admin to branch
-      const { error: branchAssignError } = await supabase
-        .from('branch_admins')
-        .insert({
-          branch_id: branchId,
-          admin_id: adminData.id
-        });
+      // Assign admin to branch using raw SQL query since the table was just created
+      const { error: branchAssignError } = await supabase.rpc('assign_admin_to_branch', { 
+        admin_id_param: adminData.id,
+        branch_id_param: branchId
+      });
         
       if (branchAssignError) throw branchAssignError;
       

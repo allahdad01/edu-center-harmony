@@ -16,6 +16,7 @@ import { AuthService, CreateUserRequest } from '@/services/AuthService';
 import { useToast } from '@/hooks/use-toast';
 import { UserRole } from '@/types';
 import PageTransition from '@/components/layout/PageTransition';
+import { supabase } from '@/integrations/supabase/client';
 
 // Form schema for creating users
 const createUserSchema = z.object({
