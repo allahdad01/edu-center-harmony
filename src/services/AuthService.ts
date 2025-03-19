@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { User, UserRole } from '@/types';
 import { User as SupabaseUser } from '@supabase/supabase-js';
@@ -146,12 +145,13 @@ export class AuthService {
         
       if (adminError) throw adminError;
       
-      // Call the RPC function directly
-      const { error: branchAssignError } = await supabase
-        .rpc('assign_admin_to_branch', {
-          admin_id_param: adminData.id,
-          branch_id_param: branchId
-        });
+      // Use direct fetch to call the RPC function since it's not in TypeScript definitions
+      const { error: branchAssignError } = await supabase.functions.invoke('assign_admin_to_branch', {
+        body: {
+          admin_id: adminData.id,
+          branch_id: branchId
+        }
+      });
         
       if (branchAssignError) throw branchAssignError;
       
