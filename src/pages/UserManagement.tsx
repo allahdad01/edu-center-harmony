@@ -12,7 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AuthService, CreateUserRequest } from '@/services/AuthService';
+import { AuthService, CreateUserRequest } from '@/services/auth';
 import { useToast } from '@/hooks/use-toast';
 import { UserRole } from '@/types';
 import PageTransition from '@/components/layout/PageTransition';

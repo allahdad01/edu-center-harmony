@@ -1,4 +1,3 @@
-
 import { useLocation } from 'react-router-dom';
 import { Routes, Route } from 'react-router-dom';
 import { useState, useEffect } from 'react';
@@ -12,7 +11,7 @@ import SuperAdminSetup from '@/pages/SuperAdminSetup';
 // Components
 import PublicRoute from '@/routes/PublicRoute';
 import ProtectedRoutes from '@/routes/ProtectedRoutes';
-import { AuthService } from '@/services/AuthService';
+import { AuthService } from '@/services/auth';
 
 export default function AppRoutes() {
   const location = useLocation();

@@ -78,5 +78,5 @@ export class AuthService {
   }
 }
 
-// Re-export the CreateUserRequest interface
-export { CreateUserRequest };
+// Re-export the CreateUserRequest interface as a type to avoid conflicts
+export type { CreateUserRequest };

@@ -1,10 +1,9 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@/types';
 import { toast } from '@/hooks/use-toast';
-import { AuthService } from '@/services/AuthService';
+import { AuthService } from '@/services/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -24,7 +23,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Check for existing session on mount and setup auth state listener
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -37,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(mappedUser);
           } catch (err) {
             console.error('Error mapping user:', err);
-            // Continue without setting user
+            setError('Session error. Please login again.');
           }
         }
       } catch (err) {
@@ -50,7 +48,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     checkAuth();
 
-    // Setup listener for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setIsLoading(true);
@@ -140,7 +137,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       await AuthService.updateUserProfile(user.id, profileData);
       
-      // Update local user state
       setUser(prev => prev ? { ...prev, ...profileData } : null);
       
       toast({

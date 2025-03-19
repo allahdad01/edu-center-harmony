@@ -1,7 +1,6 @@
-
 import { Teacher, SalaryType } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
-import { AuthService } from './AuthService';
+import { AuthService } from '@/services/auth';
 
 export class TeacherService {
   // Fetch all teachers
