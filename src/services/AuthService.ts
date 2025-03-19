@@ -55,15 +55,12 @@ export class AuthService {
   // Check if super admin exists in the system
   static async checkSuperAdminExists(): Promise<boolean> {
     try {
-      // Using raw query to call the custom function since it's not in the TypeScript definitions
+      // Call the RPC function directly
       const { data, error } = await supabase
-        .from('rpc')
-        .select('*')
-        .eq('fn_name', 'has_any_super_admin')
-        .single();
+        .rpc('has_any_super_admin');
         
       if (error) throw error;
-      return !!data?.result;
+      return !!data;
     } catch (error) {
       console.error('Error checking for super admin:', error);
       return false;
@@ -149,13 +146,12 @@ export class AuthService {
         
       if (adminError) throw adminError;
       
-      // Use raw SQL query to call the RPC function since it's not in TypeScript definitions
+      // Call the RPC function directly
       const { error: branchAssignError } = await supabase
-        .from('rpc')
-        .select('*')
-        .eq('fn_name', 'assign_admin_to_branch')
-        .eq('admin_id_param', adminData.id)
-        .eq('branch_id_param', branchId);
+        .rpc('assign_admin_to_branch', {
+          admin_id_param: adminData.id,
+          branch_id_param: branchId
+        });
         
       if (branchAssignError) throw branchAssignError;
       
