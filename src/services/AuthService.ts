@@ -95,7 +95,7 @@ export class AuthService {
       await this.assignRole(authData.user.id, 'superadmin');
       
       // Create admin record in database using functions call to bypass RLS
-      const { data: adminData, error: adminError } = await supabase.functions.invoke('create_teacher_record', {
+      const { data: adminResponse, error: adminError } = await supabase.functions.invoke('create_teacher_record', {
         body: {
           name: userData.name,
           email: userData.email,
@@ -107,7 +107,15 @@ export class AuthService {
         }
       });
         
-      if (adminError) throw adminError;
+      if (adminError) {
+        console.error('Edge function error:', adminError);
+        throw new Error(`Failed to create teacher record: ${adminError.message}`);
+      }
+      
+      if (!adminResponse || !adminResponse.id) {
+        console.error('Invalid response from edge function:', adminResponse);
+        throw new Error('Failed to create teacher record: Invalid response');
+      }
       
       return this.mapSupabaseUser(authData.user);
     } catch (error) {
@@ -133,7 +141,7 @@ export class AuthService {
       await this.assignRole(authData.user.id, 'admin');
       
       // Create admin record in database using functions call to bypass RLS
-      const { data: adminData, error: adminError } = await supabase.functions.invoke('create_teacher_record', {
+      const { data: adminResponse, error: adminError } = await supabase.functions.invoke('create_teacher_record', {
         body: {
           name: userData.name,
           email: userData.email,
@@ -145,12 +153,20 @@ export class AuthService {
         }
       });
         
-      if (adminError) throw adminError;
+      if (adminError) {
+        console.error('Edge function error:', adminError);
+        throw new Error(`Failed to create teacher record: ${adminError.message}`);
+      }
+      
+      if (!adminResponse || !adminResponse.id) {
+        console.error('Invalid response from edge function:', adminResponse);
+        throw new Error('Failed to create teacher record: Invalid response');
+      }
       
       // Use direct fetch to call the RPC function since it's not in TypeScript definitions
       const { error: branchAssignError } = await supabase.functions.invoke('assign_admin_to_branch', {
         body: {
-          admin_id: adminData.id,
+          admin_id: adminResponse.id,
           branch_id: branchId
         }
       });

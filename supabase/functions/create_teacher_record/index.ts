@@ -21,6 +21,8 @@ Deno.serve(async (req) => {
 
     // Get request JSON body
     const teacherData = await req.json();
+    
+    console.log('Received teacher data:', JSON.stringify(teacherData));
 
     if (!teacherData.name || !teacherData.email || !teacherData.user_id) {
       return new Response(
@@ -36,7 +38,12 @@ Deno.serve(async (req) => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Database error:', error);
+      throw error;
+    }
+
+    console.log('Successfully created teacher record:', data);
 
     return new Response(
       JSON.stringify({ id: data.id }),
