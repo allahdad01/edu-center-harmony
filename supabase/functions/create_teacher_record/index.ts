@@ -34,13 +34,24 @@ Deno.serve(async (req) => {
     // Insert record into teachers table
     const { data, error } = await supabase
       .from('teachers')
-      .insert(teacherData)
+      .insert({
+        name: teacherData.name,
+        email: teacherData.email,
+        contact_number: teacherData.contact_number || null,
+        address: teacherData.address || null,
+        user_id: teacherData.user_id,
+        is_active: teacherData.is_active !== undefined ? teacherData.is_active : true,
+        specialization: teacherData.specialization || 'System Administration'
+      })
       .select()
       .single();
 
     if (error) {
       console.error('Database error:', error);
-      throw error;
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
     }
 
     console.log('Successfully created teacher record:', data);
