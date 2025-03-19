@@ -1,6 +1,6 @@
 
 export * from './book';
-export * from './AuthService';
+export * from './auth';
 export * from './TeacherService';
 export * from './student';
 export * from './AttendanceService';

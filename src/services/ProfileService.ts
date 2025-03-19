@@ -1,13 +1,13 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { User, UserRole } from '@/types';
-import { AuthService } from './AuthService';
+import { AuthRoleService } from './auth/AuthRoleService';
 
 export class ProfileService {
   static async getUserProfile(userId: string): Promise<User | null> {
     try {
       // Get user roles
-      const roles = await AuthService.getUserRoles(userId);
+      const roles = await AuthRoleService.getUserRoles(userId);
       
       if (!roles || roles.length === 0) {
         console.error('No roles found for user');
