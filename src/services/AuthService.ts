@@ -76,10 +76,16 @@ export class AuthService {
       }
 
       // Create user account
-      const { data: authData, error: authError } = await this.signUp(
-        userData.email, 
-        userData.password, 
-        userData.name
+      const { data: authData, error: authError } = await supabase.auth.signUp(
+        {
+          email: userData.email, 
+          password: userData.password,
+          options: {
+            data: {
+              name: userData.name
+            }
+          }
+        }
       );
       
       if (authError) throw authError;
@@ -88,10 +94,9 @@ export class AuthService {
       // Assign superadmin role
       await this.assignRole(authData.user.id, 'superadmin');
       
-      // Create admin record in database
-      const { data: adminData, error: adminError } = await supabase
-        .from('teachers')  // Using teachers table for admin records
-        .insert({
+      // Create admin record in database using functions call to bypass RLS
+      const { data: adminData, error: adminError } = await supabase.functions.invoke('create_teacher_record', {
+        body: {
           name: userData.name,
           email: userData.email,
           contact_number: userData.contactNumber,
@@ -99,9 +104,8 @@ export class AuthService {
           user_id: authData.user.id,
           is_active: true,
           specialization: 'System Administration'
-        })
-        .select()
-        .single();
+        }
+      });
         
       if (adminError) throw adminError;
       
@@ -128,10 +132,9 @@ export class AuthService {
       // Assign admin role
       await this.assignRole(authData.user.id, 'admin');
       
-      // Create admin record in database
-      const { data: adminData, error: adminError } = await supabase
-        .from('teachers')  // Using teachers table for admin records
-        .insert({
+      // Create admin record in database using functions call to bypass RLS
+      const { data: adminData, error: adminError } = await supabase.functions.invoke('create_teacher_record', {
+        body: {
           name: userData.name,
           email: userData.email,
           contact_number: userData.contactNumber,
@@ -139,9 +142,8 @@ export class AuthService {
           user_id: authData.user.id,
           is_active: true,
           specialization: 'Branch Administration'
-        })
-        .select()
-        .single();
+        }
+      });
         
       if (adminError) throw adminError;
       
