@@ -78,5 +78,5 @@ export class AuthService {
   }
 }
 
-// Re-export the CreateUserRequest interface as a type to avoid conflicts
-export type { CreateUserRequest };
+// Avoiding the conflict by only declaring it once
+// Don't re-export the interface since it's already exported above
