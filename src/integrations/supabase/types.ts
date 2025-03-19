@@ -115,6 +115,42 @@ export type Database = {
           },
         ]
       }
+      branch_admins: {
+        Row: {
+          admin_id: string
+          branch_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          admin_id: string
+          branch_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          admin_id?: string
+          branch_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branch_admins_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "branch_admins_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branches: {
         Row: {
           created_at: string
@@ -584,6 +620,10 @@ export type Database = {
           user_id: string
         }
         Returns: Database["public"]["Enums"]["app_role"][]
+      }
+      has_any_super_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
       has_role: {
         Args: {
