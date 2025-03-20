@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { User, UserRole } from '@/types';
 import { User as SupabaseUser } from '@supabase/supabase-js';
@@ -43,7 +44,9 @@ export class AuthUserService {
       // Assign superadmin role
       await AuthRoleService.assignRole(authData.user.id, 'superadmin');
       
-      // Create a superadmin profile directly in the database
+      console.log('Creating superadmin record in database...');
+      
+      // Create a superadmin profile directly in the database with additional logging
       const { data: adminData, error: adminError } = await supabase
         .from('administrators')
         .insert({
@@ -59,9 +62,11 @@ export class AuthUserService {
         .single();
         
       if (adminError) {
-        console.error('Database error:', adminError);
+        console.error('Database error when creating super admin:', adminError);
         throw new Error(`Failed to create administrator record: ${adminError.message}`);
       }
+      
+      console.log('Superadmin created successfully:', adminData);
       
       return this.mapSupabaseUser(authData.user);
     } catch (error) {
@@ -223,14 +228,19 @@ export class AuthUserService {
       let userData = null;
       
       if (isSuperAdmin || isAdmin) {
+        console.log('Fetching administrator data for user:', supabaseUser.id);
         const { data, error } = await supabase
           .from('administrators')
           .select('*')
           .eq('user_id', supabaseUser.id)
           .maybeSingle();
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching administrator data:', error);
+          throw error;
+        }
         userData = data;
+        console.log('Administrator data fetched:', userData);
       } else if (isTeacher) {
         const { data, error } = await supabase
           .from('teachers')
@@ -253,6 +263,7 @@ export class AuthUserService {
       
       // If we don't have user data, create a minimal user object
       if (!userData) {
+        console.log('No role-specific data found for user, creating minimal user object');
         return {
           id: supabaseUser.id,
           name: supabaseUser.user_metadata?.name || 'Unknown User',
