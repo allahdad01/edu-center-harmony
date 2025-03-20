@@ -31,6 +31,8 @@ export class AuthUserService {
         throw new Error('Super Admin already exists');
       }
 
+      console.log('Starting super admin creation process...');
+      
       // Create user account
       const { data: authData, error: authError } = await AuthLoginService.signUp(
         userData.email, 
@@ -38,37 +40,57 @@ export class AuthUserService {
         userData.name
       );
       
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create user account');
+      if (authError) {
+        console.error('Auth error during signup:', authError);
+        throw authError;
+      }
+      
+      if (!authData.user) {
+        console.error('No user data returned from signup');
+        throw new Error('Failed to create user account');
+      }
+      
+      console.log('User account created with ID:', authData.user.id);
       
       // Assign superadmin role
-      await AuthRoleService.assignRole(authData.user.id, 'superadmin');
+      try {
+        await AuthRoleService.assignRole(authData.user.id, 'superadmin');
+        console.log('Superadmin role assigned successfully');
+      } catch (roleError) {
+        console.error('Error assigning superadmin role:', roleError);
+        throw roleError;
+      }
       
       console.log('Creating superadmin record in database...');
       
       // Create a superadmin profile directly in the database with additional logging
-      const { data: adminData, error: adminError } = await supabase
-        .from('administrators')
-        .insert({
-          name: userData.name,
-          email: userData.email,
-          contact_number: userData.contactNumber,
-          address: userData.address || null,
-          user_id: authData.user.id,
-          is_active: true,
-          role: 'superadmin'
-        })
-        .select()
-        .single();
+      try {
+        const { data: adminData, error: adminError } = await supabase
+          .from('administrators')
+          .insert({
+            name: userData.name,
+            email: userData.email,
+            contact_number: userData.contactNumber,
+            address: userData.address || null,
+            user_id: authData.user.id,
+            is_active: true,
+            role: 'superadmin'
+          })
+          .select()
+          .single();
+          
+        if (adminError) {
+          console.error('Database error when creating super admin:', adminError);
+          throw new Error(`Failed to create administrator record: ${adminError.message}`);
+        }
         
-      if (adminError) {
-        console.error('Database error when creating super admin:', adminError);
-        throw new Error(`Failed to create administrator record: ${adminError.message}`);
+        console.log('Superadmin created successfully:', adminData);
+        
+        return this.mapSupabaseUser(authData.user);
+      } catch (insertError) {
+        console.error('Error inserting administrator record:', insertError);
+        throw insertError;
       }
-      
-      console.log('Superadmin created successfully:', adminData);
-      
-      return this.mapSupabaseUser(authData.user);
     } catch (error) {
       console.error('Error creating super admin:', error);
       throw error;
