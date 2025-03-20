@@ -44,7 +44,6 @@ export class AuthUserService {
       await AuthRoleService.assignRole(authData.user.id, 'superadmin');
       
       // Create a superadmin profile directly in the database
-      // We don't use the teacher_record edge function anymore
       const { data: adminData, error: adminError } = await supabase
         .from('administrators')
         .insert({
@@ -221,10 +220,21 @@ export class AuthUserService {
       // Fetch teacher or student data depending on role
       const isTeacher = roles.includes('teacher');
       const isStudent = roles.includes('student');
+      const isSuperAdmin = roles.includes('superadmin');
+      const isAdmin = roles.includes('admin');
       
       let userData = null;
       
-      if (isTeacher) {
+      if (isSuperAdmin || isAdmin) {
+        const { data, error } = await supabase
+          .from('administrators')
+          .select('*')
+          .eq('user_id', supabaseUser.id)
+          .maybeSingle();
+          
+        if (error) throw error;
+        userData = data;
+      } else if (isTeacher) {
         const { data, error } = await supabase
           .from('teachers')
           .select('*')
@@ -294,10 +304,23 @@ export class AuthUserService {
         throw new Error('User has no role assigned');
       }
       
+      const isSuperAdmin = roles.includes('superadmin');
+      const isAdmin = roles.includes('admin');
       const isTeacher = roles.includes('teacher');
       const isStudent = roles.includes('student');
       
-      if (isTeacher) {
+      if (isSuperAdmin || isAdmin) {
+        await supabase
+          .from('administrators')
+          .update({
+            name: profileData.name,
+            email: profileData.email,
+            contact_number: profileData.contactNumber,
+            address: profileData.address,
+            is_active: profileData.isActive
+          })
+          .eq('user_id', userId);
+      } else if (isTeacher) {
         await supabase
           .from('teachers')
           .update({
