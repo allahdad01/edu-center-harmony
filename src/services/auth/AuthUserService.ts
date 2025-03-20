@@ -86,33 +86,30 @@ export class AuthUserService {
       // Assign admin role
       await AuthRoleService.assignRole(authData.user.id, 'admin');
       
-      // Create admin record in database using functions call to bypass RLS
-      const { data: adminResponse, error: adminError } = await supabase.functions.invoke('create_teacher_record', {
-        body: {
+      // Create admin profile directly in the database
+      const { data: adminData, error: adminError } = await supabase
+        .from('administrators')
+        .insert({
           name: userData.name,
           email: userData.email,
           contact_number: userData.contactNumber,
           address: userData.address || null,
           user_id: authData.user.id,
           is_active: true,
-          specialization: 'Branch Administration'
-        }
-      });
+          role: 'admin'
+        })
+        .select()
+        .single();
         
       if (adminError) {
-        console.error('Edge function error:', adminError);
-        throw new Error(`Failed to create teacher record: ${adminError.message}`);
-      }
-      
-      if (!adminResponse || !adminResponse.id) {
-        console.error('Invalid response from edge function:', adminResponse);
-        throw new Error('Failed to create teacher record: Invalid response');
+        console.error('Database error:', adminError);
+        throw new Error(`Failed to create administrator record: ${adminError.message}`);
       }
       
       // Use direct fetch to call the RPC function since it's not in TypeScript definitions
       const { error: branchAssignError } = await supabase.functions.invoke('assign_admin_to_branch', {
         body: {
-          admin_id: adminResponse.id,
+          admin_id: adminData.id,
           branch_id: branchId
         }
       });
