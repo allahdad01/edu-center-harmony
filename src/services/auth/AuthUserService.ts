@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { User, UserRole } from '@/types';
 import { User as SupabaseUser } from '@supabase/supabase-js';
@@ -44,27 +43,25 @@ export class AuthUserService {
       // Assign superadmin role
       await AuthRoleService.assignRole(authData.user.id, 'superadmin');
       
-      // Create admin record in database using functions call to bypass RLS
-      const { data: adminResponse, error: adminError } = await supabase.functions.invoke('create_teacher_record', {
-        body: {
+      // Create a superadmin profile directly in the database
+      // We don't use the teacher_record edge function anymore
+      const { data: adminData, error: adminError } = await supabase
+        .from('administrators')
+        .insert({
           name: userData.name,
           email: userData.email,
           contact_number: userData.contactNumber,
           address: userData.address || null,
           user_id: authData.user.id,
           is_active: true,
-          specialization: 'System Administration'
-        }
-      });
+          role: 'superadmin'
+        })
+        .select()
+        .single();
         
       if (adminError) {
-        console.error('Edge function error:', adminError);
-        throw new Error(`Failed to create teacher record: ${adminError.message}`);
-      }
-      
-      if (!adminResponse || !adminResponse.id) {
-        console.error('Invalid response from edge function:', adminResponse);
-        throw new Error('Failed to create teacher record: Invalid response');
+        console.error('Database error:', adminError);
+        throw new Error(`Failed to create administrator record: ${adminError.message}`);
       }
       
       return this.mapSupabaseUser(authData.user);
