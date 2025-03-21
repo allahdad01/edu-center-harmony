@@ -1,6 +1,8 @@
-
 import Card, { CardContent, CardHeader, CardTitle } from '@/components/ui-custom/Card';
 import { UserRole } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { PlusCircle, Users, Building, BarChart4, Layers } from 'lucide-react';
 
 export function renderRoleSpecificContent(role: UserRole) {
   // Content specific to each role
@@ -38,7 +40,6 @@ export function renderRoleSpecificContent(role: UserRole) {
         </>
       );
     case 'admin':
-    case 'superadmin':
       return (
         <>
           <RevenueOverview />
@@ -46,12 +47,19 @@ export function renderRoleSpecificContent(role: UserRole) {
           <PerformanceOverview />
         </>
       );
+    case 'superadmin':
+      return (
+        <>
+          <SuperAdminOverview />
+          <BranchPerformance />
+          <AdminManagement />
+        </>
+      );
     default:
       return null;
   }
 }
 
-// Student dashboard sections
 export const UpcomingExams = () => (
   <Card>
     <CardHeader>
@@ -134,7 +142,6 @@ export const PendingInvoices = () => (
   </Card>
 );
 
-// Teacher dashboard sections
 export const ClassesToday = () => (
   <Card>
     <CardHeader>
@@ -197,7 +204,6 @@ export const UpcomingSchedule = () => (
   </Card>
 );
 
-// Finance dashboard sections
 export const RevenueOverview = () => (
   <Card>
     <CardHeader>
@@ -258,7 +264,6 @@ export const ExpenseBreakdown = () => (
   </Card>
 );
 
-// Controller dashboard sections
 export const ExamSchedule = () => (
   <Card>
     <CardHeader>
@@ -348,7 +353,6 @@ export const TeacherAttendance = () => (
   </Card>
 );
 
-// Admin dashboard sections
 export const StudentEnrollment = () => (
   <Card>
     <CardHeader>
@@ -403,6 +407,129 @@ export const PerformanceOverview = () => (
             <p className="font-medium">Teacher Rating</p>
           </div>
           <div className="text-sm font-medium">4.7/5</div>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+export const SuperAdminOverview = () => (
+  <Card>
+    <CardHeader>
+      <CardTitle className="flex justify-between">
+        <span>System Overview</span>
+        <Button variant="outline" size="sm" asChild>
+          <Link to="/reports">View Reports</Link>
+        </Button>
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="space-y-4">
+        <div className="flex justify-between">
+          <div>
+            <p className="font-medium">Total Students</p>
+          </div>
+          <div className="text-sm font-medium">1,245</div>
+        </div>
+        <div className="flex justify-between">
+          <div>
+            <p className="font-medium">Active Teachers</p>
+          </div>
+          <div className="text-sm font-medium">64</div>
+        </div>
+        <div className="flex justify-between">
+          <div>
+            <p className="font-medium">Monthly Revenue</p>
+          </div>
+          <div className="text-sm font-medium">$168,720</div>
+        </div>
+        <div className="flex justify-between">
+          <div>
+            <p className="font-medium">Growth Rate</p>
+          </div>
+          <div className="text-sm font-medium text-green-500">+15.3%</div>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+export const BranchPerformance = () => (
+  <Card>
+    <CardHeader>
+      <CardTitle className="flex justify-between">
+        <span>Branch Performance</span>
+        <Button variant="outline" size="sm" asChild>
+          <Link to="/branches">Manage</Link>
+        </Button>
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="space-y-4">
+        <div className="flex justify-between">
+          <div>
+            <p className="font-medium">Main Branch</p>
+            <p className="text-sm text-muted-foreground">Downtown</p>
+          </div>
+          <div className="text-sm font-medium text-green-500">$78,450</div>
+        </div>
+        <div className="flex justify-between">
+          <div>
+            <p className="font-medium">North Campus</p>
+            <p className="text-sm text-muted-foreground">Uptown</p>
+          </div>
+          <div className="text-sm font-medium text-green-500">$45,210</div>
+        </div>
+        <div className="flex justify-between">
+          <div>
+            <p className="font-medium">East Wing</p>
+            <p className="text-sm text-muted-foreground">Riverside</p>
+          </div>
+          <div className="text-sm font-medium text-amber-500">$32,180</div>
+        </div>
+        <div className="flex justify-between">
+          <div>
+            <p className="font-medium">South Center</p>
+            <p className="text-sm text-muted-foreground">Marina</p>
+          </div>
+          <div className="text-sm font-medium text-red-500">$12,880</div>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+export const AdminManagement = () => (
+  <Card>
+    <CardHeader>
+      <CardTitle className="flex justify-between">
+        <span>Administrators</span>
+        <Button variant="outline" size="sm" asChild>
+          <Link to="/users">Manage</Link>
+        </Button>
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="space-y-4">
+        <div className="flex justify-between">
+          <div>
+            <p className="font-medium">Total Admins</p>
+          </div>
+          <div className="text-sm font-medium">12</div>
+        </div>
+        <div className="flex justify-between">
+          <div>
+            <p className="font-medium">Recently Added</p>
+          </div>
+          <div className="text-sm font-medium">2 this month</div>
+        </div>
+        <div className="mt-4">
+          <Button size="sm" className="w-full" asChild>
+            <Link to="/users/new">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Administrator
+            </Link>
+          </Button>
         </div>
       </div>
     </CardContent>

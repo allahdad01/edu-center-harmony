@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/context/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Route, Routes } from 'react-router-dom';
@@ -16,6 +15,7 @@ import Exams from '@/pages/Exams';
 import Schedule from '@/pages/Schedule';
 import Profile from '@/pages/Profile';
 import UserManagement from '@/pages/UserManagement';
+import Branches from '@/pages/Branches';
 
 // Layout components
 import DashboardLayout from '@/routes/DashboardLayout';
@@ -81,6 +81,20 @@ export default function ProtectedRoutes() {
             <DashboardLayout>
               <RoleProtectedRoute allowedRoles={ADMIN_ROLES}>
                 <UserManagement />
+              </RoleProtectedRoute>
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* Branch Management - for super admin only */}
+      <Route
+        path="/branches"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <RoleProtectedRoute allowedRoles={SUPER_ADMIN_ONLY}>
+                <Branches />
               </RoleProtectedRoute>
             </DashboardLayout>
           </ProtectedRoute>

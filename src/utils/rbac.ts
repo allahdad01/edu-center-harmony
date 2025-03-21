@@ -64,7 +64,14 @@ export const getPermittedActions = (userRole: UserRole): Record<string, boolean>
     
     // Admin permissions
     manageBranch: hasPermission(userRole, 'superadmin'),
-    manageSystem: hasPermission(userRole, 'superadmin')
+    manageSystem: hasPermission(userRole, 'superadmin'),
+    
+    // Superadmin-specific permissions
+    manageAllAdmins: userRole === 'superadmin',
+    manageBranchAdmins: userRole === 'superadmin',
+    accessSystemSettings: userRole === 'superadmin',
+    viewAllBranchData: userRole === 'superadmin',
+    manageGlobalSettings: userRole === 'superadmin'
   };
   
   return permissions;

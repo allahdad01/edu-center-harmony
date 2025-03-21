@@ -33,5 +33,8 @@ export function usePermissions() {
     isAdmin: userRole === 'admin',
     isSuperAdmin: userRole === 'superadmin',
     isStaff: ['teacher', 'finance', 'controller', 'admin', 'superadmin'].includes(userRole),
+    canManageBranches: userRole === 'superadmin',
+    canManageAllAdmins: userRole === 'superadmin',
+    canAccessSystemSettings: userRole === 'superadmin',
   };
 }
